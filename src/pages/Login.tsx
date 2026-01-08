@@ -248,23 +248,6 @@ const Login = () => {
               </Button>
             </form>
 
-            {/* Toggle Sign Up / Sign In */}
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  setError('');
-                }}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {isSignUp ? (
-                  <>Already have an account? <span className="text-primary font-medium">Sign in</span></>
-                ) : (
-                  <>Don't have an account? <span className="text-primary font-medium">Sign up</span></>
-                )}
-              </button>
-            </div>
           </div>
         </div>
       </div>
