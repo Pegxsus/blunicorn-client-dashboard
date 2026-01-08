@@ -65,7 +65,7 @@ const Login = () => {
             {/* Logo & Header */}
             <div className="text-center space-y-4">
               <div className="flex items-center justify-center gap-3">
-                <img src={logo} alt="Blunicorn" className="w-10 h-10 object-contain" />
+                <img src={logo} alt="Blunicorn" className="w-10 h-10 object-contain rounded-lg" />
                 <span className="text-xl font-bold text-foreground">Blunicorn</span>
               </div>
               <div>
