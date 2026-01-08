@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, Sun, Moon } from 'lucide-react';
+import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 // Blunicorn Logo SVG Component
 const BlunicornLogo = ({ className }: { className?: string }) => (
@@ -44,7 +42,6 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const { login, isLoading } = useAuth();
-  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,8 +75,8 @@ const Login = () => {
 
   return (
     <div className="min-h-screen mesh-gradient grid-overlay flex flex-col">
-      {/* Top Bar with Back + Theme Toggle */}
-      <div className="p-6 flex items-center justify-between">
+      {/* Top Bar with Back */}
+      <div className="p-6">
         <Link 
           to="/" 
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -87,16 +84,6 @@ const Login = () => {
           <ArrowLeft className="w-4 h-4" />
           Back to Home
         </Link>
-        
-        {/* Theme Toggle */}
-        <div className="flex items-center gap-3">
-          <Sun className="w-4 h-4 text-muted-foreground" />
-          <Switch
-            checked={theme === 'dark'}
-            onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-          />
-          <Moon className="w-4 h-4 text-muted-foreground" />
-        </div>
       </div>
 
       {/* Centered Auth Card */}

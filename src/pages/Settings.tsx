@@ -1,3 +1,4 @@
+import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { User, Bell, Shield, Palette } from 'lucide-react';
 
 const Settings = () => {
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const getInitials = (name: string) => {
     return name
@@ -160,11 +162,11 @@ const Settings = () => {
                 Toggle between light and dark theme
               </p>
             </div>
-            <Switch defaultChecked disabled />
+            <Switch 
+              checked={theme === 'dark'} 
+              onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+            />
           </div>
-          <p className="text-xs text-muted-foreground">
-            Dark mode is currently the only available theme.
-          </p>
         </section>
       </div>
     </DashboardLayout>
