@@ -72,29 +72,29 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 transform bg-sidebar border-r border-sidebar-border transition-transform duration-200 ease-in-out lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 w-60 transform bg-sidebar border-r border-sidebar-border transition-transform duration-200 ease-in-out lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
-            <Link to="/dashboard" className="flex items-center gap-3">
-              <img src={logo} alt="Blunicorn" className="w-9 h-9 object-contain rounded-lg" />
-              <span className="text-lg font-bold text-foreground">Blunicorn</span>
+          <div className="flex h-14 items-center justify-between px-4 border-b border-sidebar-border">
+            <Link to="/dashboard" className="flex items-center gap-2.5">
+              <img src={logo} alt="Blunicorn" className="w-8 h-8 object-contain rounded-lg" />
+              <span className="text-sm font-semibold text-foreground">Blunicorn</span>
             </Link>
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden h-8 w-8"
               onClick={() => setSidebarOpen(false)}
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </Button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-1 p-4">
+          <nav className="flex-1 space-y-0.5 p-3">
             {navigation.map((item) => {
               const isActive = location.pathname === item.href || 
                 (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
@@ -104,14 +104,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   key={item.name}
                   to={item.href}
                   className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                    'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
                     isActive
-                      ? 'bg-sidebar-accent text-foreground'
-                      : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground'
+                      ? 'bg-muted text-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <item.icon className={cn('w-5 h-5', isActive && 'text-primary')} />
+                  <item.icon className="w-4 h-4" />
                   {item.name}
                 </Link>
               );
@@ -119,21 +119,21 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </nav>
 
           {/* Role switcher (demo) */}
-          <div className="p-4 border-t border-sidebar-border">
-            <div className="text-xs text-muted-foreground mb-2">Demo Mode</div>
-            <div className="flex gap-2">
+          <div className="p-3 border-t border-sidebar-border">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 px-1">Demo Mode</div>
+            <div className="flex gap-1.5">
               <Button
-                variant={user?.role === 'client' ? 'default' : 'outline'}
+                variant={user?.role === 'client' ? 'default' : 'ghost'}
                 size="sm"
-                className="flex-1 text-xs"
+                className="flex-1 text-xs h-7"
                 onClick={() => switchRole('client')}
               >
                 Client
               </Button>
               <Button
-                variant={user?.role === 'admin' ? 'default' : 'outline'}
+                variant={user?.role === 'admin' ? 'default' : 'ghost'}
                 size="sm"
-                className="flex-1 text-xs"
+                className="flex-1 text-xs h-7"
                 onClick={() => switchRole('admin')}
               >
                 Admin
@@ -142,10 +142,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
 
           {/* User section */}
-          <div className="p-4 border-t border-sidebar-border">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-9 h-9">
-                <AvatarFallback className="bg-primary/10 text-primary text-sm">
+          <div className="p-3 border-t border-sidebar-border">
+            <div className="flex items-center gap-2.5">
+              <Avatar className="w-8 h-8">
+                <AvatarFallback className="bg-muted text-foreground text-xs">
                   {user ? getInitials(user.name) : '??'}
                 </AvatarFallback>
               </Avatar>
@@ -157,7 +157,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   {user?.role === 'admin' ? 'Administrator' : 'Client'}
                 </p>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleLogout}>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 text-muted-foreground" />
               </Button>
             </div>
@@ -166,16 +166,16 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-60">
         {/* Top bar */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 sm:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 sm:px-6">
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className="lg:hidden h-8 w-8"
             onClick={() => setSidebarOpen(true)}
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-4 h-4" />
           </Button>
 
           <div className="flex-1" />

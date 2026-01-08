@@ -20,39 +20,39 @@ const statusLabels: Record<ProjectStatus, string> = {
 
 const ProjectCard = ({ project }: ProjectCardProps) => {
   return (
-    <div className="glass-card glow-effect p-6 group">
-      <div className="flex items-start justify-between mb-4">
+    <div className="glass-card glow-effect p-4 group">
+      <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+          <h3 className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
             {project.name}
           </h3>
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
             {project.description}
           </p>
         </div>
-        <Badge variant={project.status} className="ml-4 shrink-0">
+        <Badge variant={project.status} className="ml-3 shrink-0 text-[10px]">
           {statusLabels[project.status]}
         </Badge>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
-          <div className="flex items-center justify-between text-sm mb-2">
+          <div className="flex items-center justify-between text-xs mb-1.5">
             <span className="text-muted-foreground">Progress</span>
-            <span className="font-medium text-foreground">{project.progress}%</span>
+            <span className="font-medium text-foreground mono">{project.progress}%</span>
           </div>
-          <Progress value={project.progress} />
+          <Progress value={project.progress} className="h-1" />
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-border">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="w-4 h-4" />
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Calendar className="w-3 h-3" />
             <span>Est. {format(new Date(project.estimatedDelivery), 'MMM d, yyyy')}</span>
           </div>
-          <Button asChild variant="ghost" size="sm" className="gap-1">
+          <Button asChild variant="ghost" size="sm" className="gap-1 h-7 text-xs">
             <Link to={`/projects/${project.id}`}>
               View
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3 h-3" />
             </Link>
           </Button>
         </div>
