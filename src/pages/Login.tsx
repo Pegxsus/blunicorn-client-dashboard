@@ -1,16 +1,46 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Zap, ArrowRight } from 'lucide-react';
-import heroBg from '@/assets/hero-bg.jpg';
+import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+
+// Blunicorn Logo SVG Component
+const BlunicornLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 40 40" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M20 4L4 12V28L20 36L36 28V12L20 4Z"
+      fill="url(#logo-gradient)"
+      fillOpacity="0.2"
+      stroke="url(#logo-gradient)"
+      strokeWidth="1.5"
+    />
+    <path
+      d="M20 8L28 12.5V18L20 22.5L12 18V12.5L20 8Z"
+      fill="url(#logo-gradient)"
+    />
+    <path
+      d="M20 22.5V32M12 18L6 21.5M28 18L34 21.5"
+      stroke="url(#logo-gradient)"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <defs>
+      <linearGradient id="logo-gradient" x1="4" y1="4" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#60A5FA" />
+        <stop offset="1" stopColor="#A78BFA" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -44,149 +74,177 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left side - Hero */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${heroBg})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/60 to-transparent" />
-        <div className="relative z-10 flex flex-col justify-between p-12">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Zap className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-bold gradient-text">Blunicorn</span>
-          </div>
-          
-          <div className="space-y-6 max-w-lg">
-            <h1 className="text-5xl font-bold leading-tight">
-              Your automations,{' '}
-              <span className="gradient-text">delivered.</span>
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Track your project progress, download deliverables, and collaborate with our team—all in one premium portal.
-            </p>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-status-completed" />
-                Real-time updates
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-primary" />
-                Secure downloads
-              </div>
-            </div>
-          </div>
-
-          <p className="text-sm text-muted-foreground">
-            © 2025 Blunicorn. Premium automation services.
-          </p>
-        </div>
+    <div className="min-h-screen mesh-gradient grid-overlay flex flex-col">
+      {/* Back to Home */}
+      <div className="p-6">
+        <Link 
+          to="/" 
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Home
+        </Link>
       </div>
 
-      {/* Right side - Login form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-8 animate-fade-in">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-              <Zap className="w-6 h-6 text-primary-foreground" />
+      {/* Centered Auth Card */}
+      <div className="flex-1 flex items-center justify-center p-6 -mt-16">
+        <div className="w-full max-w-md animate-scale-in">
+          <div className="auth-card p-8 space-y-8">
+            {/* Logo & Header */}
+            <div className="text-center space-y-4">
+              <div className="flex items-center justify-center gap-3">
+                <BlunicornLogo className="w-10 h-10" />
+                <span className="text-xl font-bold text-foreground">Blunicorn</span>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
+                <p className="text-muted-foreground mt-1">
+                  Enter your credentials to access your account
+                </p>
+              </div>
             </div>
-            <span className="text-2xl font-bold gradient-text">Blunicorn</span>
-          </div>
 
-          <div className="text-center lg:text-left">
-            <h2 className="text-3xl font-bold">Welcome back</h2>
-            <p className="text-muted-foreground mt-2">Sign in to access your client portal</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-4">
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                />
+                <div className="input-with-icon">
+                  <Mail className="input-icon" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                />
+                <div className="input-with-icon">
+                  <Lock className="input-icon" />
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    className="pr-11"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="input-action text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {error && (
-              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-                {error}
+              <div className="flex justify-end">
+                <a 
+                  href="#" 
+                  className="text-sm text-primary hover:underline"
+                >
+                  Forgot password?
+                </a>
               </div>
-            )}
 
-            <Button
-              type="submit"
-              variant="gradient"
-              size="lg"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  Sign in
-                  <ArrowRight className="w-5 h-5" />
-                </>
+              {error && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+                  {error}
+                </div>
               )}
-            </Button>
-          </form>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Demo Access</span>
-            </div>
-          </div>
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  'Sign In'
+                )}
+              </Button>
+            </form>
 
-          <div className="grid grid-cols-2 gap-4">
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-3 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+
+            {/* Social Login */}
             <Button
               type="button"
               variant="outline"
+              size="lg"
+              className="w-full gap-3"
               onClick={() => handleDemoLogin('client')}
               disabled={isLoading}
             >
-              Client Demo
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              Continue with Google
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleDemoLogin('admin')}
-              disabled={isLoading}
-            >
-              Admin Demo
-            </Button>
-          </div>
 
-          <p className="text-center text-sm text-muted-foreground">
-            Having trouble signing in?{' '}
-            <a href="mailto:support@blunicorn.org" className="text-primary hover:underline">
-              Contact support
-            </a>
-          </p>
+            {/* Demo Access (for testing) */}
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDemoLogin('client')}
+                disabled={isLoading}
+                className="text-xs"
+              >
+                Demo: Client
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDemoLogin('admin')}
+                disabled={isLoading}
+                className="text-xs"
+              >
+                Demo: Admin
+              </Button>
+            </div>
+
+            {/* Sign Up Link */}
+            <p className="text-center text-sm text-muted-foreground">
+              Don't have an account?{' '}
+              <a href="#" className="text-primary hover:underline font-medium">
+                Sign up
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </div>
