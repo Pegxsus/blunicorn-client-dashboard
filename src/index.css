@@ -182,19 +182,23 @@
 
   /* Glow effect on hover */
   .glow-effect {
-    @apply relative;
+    @apply relative transition-all duration-300;
   }
 
   .glow-effect::before {
     content: '';
-    @apply absolute -inset-px rounded-xl opacity-0 transition-opacity duration-500;
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
-    filter: blur(20px);
+    @apply absolute -inset-1 rounded-xl opacity-0 transition-all duration-300;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.4) 0%, hsl(var(--secondary) / 0.3) 100%);
+    filter: blur(12px);
     z-index: -1;
   }
 
   .glow-effect:hover::before {
-    @apply opacity-30;
+    @apply opacity-100;
+  }
+
+  .glow-effect:hover {
+    @apply transform scale-[1.01];
   }
 
   /* Status badges */
