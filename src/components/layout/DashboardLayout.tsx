@@ -80,7 +80,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           {/* Logo */}
           <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
             <Link to="/dashboard" className="flex items-center gap-3">
-              <img src={logo} alt="Blunicorn" className="w-9 h-9 object-contain" />
+              <img src={logo} alt="Blunicorn" className="w-9 h-9 object-contain rounded-lg" />
               <span className="text-lg font-bold text-foreground">Blunicorn</span>
             </Link>
             <Button
