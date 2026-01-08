@@ -16,7 +16,9 @@ interface FeedbackSectionProps {
 const FeedbackSection = ({ feedback, revisionCount, onSubmit }: FeedbackSectionProps) => {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
+  const { profile, user } = useAuth();
+  
+  const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User';
 
   const handleSubmit = async () => {
     if (!message.trim()) return;
@@ -59,7 +61,7 @@ const FeedbackSection = ({ feedback, revisionCount, onSubmit }: FeedbackSectionP
       {/* Feedback thread */}
       <div className="space-y-4">
         {feedback.map((item) => {
-          const isCurrentUser = item.author === user?.name;
+          const isCurrentUser = item.author === displayName;
 
           return (
             <div

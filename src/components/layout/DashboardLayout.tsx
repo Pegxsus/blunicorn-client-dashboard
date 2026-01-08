@@ -30,24 +30,26 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { user, logout, switchRole } = useAuth();
+  const { user, profile, role, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const unreadNotifications = mockNotifications.filter(n => !n.read).length;
 
+  const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User';
+
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Projects', href: '/projects', icon: FolderOpen },
-    ...(user?.role === 'admin'
+    ...(role === 'admin'
       ? [{ name: 'Admin', href: '/admin', icon: Shield }]
       : []),
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
   };
 
@@ -118,43 +120,20 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             })}
           </nav>
 
-          {/* Role switcher (demo) */}
-          <div className="p-3 border-t border-sidebar-border">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 px-1">Demo Mode</div>
-            <div className="flex gap-1.5">
-              <Button
-                variant={user?.role === 'client' ? 'default' : 'ghost'}
-                size="sm"
-                className="flex-1 text-xs h-7"
-                onClick={() => switchRole('client')}
-              >
-                Client
-              </Button>
-              <Button
-                variant={user?.role === 'admin' ? 'default' : 'ghost'}
-                size="sm"
-                className="flex-1 text-xs h-7"
-                onClick={() => switchRole('admin')}
-              >
-                Admin
-              </Button>
-            </div>
-          </div>
-
           {/* User section */}
           <div className="p-3 border-t border-sidebar-border">
             <div className="flex items-center gap-2.5">
               <Avatar className="w-8 h-8">
                 <AvatarFallback className="bg-muted text-foreground text-xs">
-                  {user ? getInitials(user.name) : '??'}
+                  {getInitials(displayName)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
-                  {user?.name}
+                  {displayName}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {user?.role === 'admin' ? 'Administrator' : 'Client'}
+                  {role === 'admin' ? 'Administrator' : 'Client'}
                 </p>
               </div>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
@@ -240,11 +219,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <Button variant="ghost" className="gap-2">
                   <Avatar className="w-7 h-7">
                     <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                      {user ? getInitials(user.name) : '??'}
+                      {getInitials(displayName)}
                     </AvatarFallback>
                   </Avatar>
                   <span className="hidden sm:inline-block text-sm font-medium">
-                    {user?.name}
+                    {displayName}
                   </span>
                   <ChevronDown className="w-4 h-4 text-muted-foreground" />
                 </Button>
