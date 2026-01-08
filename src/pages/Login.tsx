@@ -46,40 +46,40 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen mesh-gradient grid-overlay flex flex-col">
-      {/* Top Bar with Back */}
-      <div className="p-6">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Top Bar */}
+      <div className="p-4 border-b border-border">
         <Link 
           to="/" 
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Home
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back
         </Link>
       </div>
 
       {/* Centered Auth Card */}
-      <div className="flex-1 flex items-center justify-center p-6 -mt-16">
-        <div className="w-full max-w-md animate-scale-in">
-          <div className="auth-card p-8 space-y-8">
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          <div className="auth-card p-6 space-y-6">
             {/* Logo & Header */}
-            <div className="text-center space-y-4">
-              <div className="flex items-center justify-center gap-3">
-                <img src={logo} alt="Blunicorn" className="w-10 h-10 object-contain rounded-lg" />
-                <span className="text-xl font-bold text-foreground">Blunicorn</span>
+            <div className="text-center space-y-3">
+              <div className="flex items-center justify-center gap-2">
+                <img src={logo} alt="Blunicorn" className="w-8 h-8 object-contain rounded-lg" />
+                <span className="text-base font-semibold text-foreground">Blunicorn</span>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
-                <p className="text-muted-foreground mt-1">
-                  Enter your credentials to access your account
+                <h1 className="text-lg font-semibold text-foreground">Welcome back</h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Enter your credentials to continue
                 </p>
               </div>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-xs">Email</Label>
                 <div className="input-with-icon">
                   <Mail className="input-icon" />
                   <Input
@@ -89,12 +89,13 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
+                    className="h-9"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="password" className="text-xs">Password</Label>
                 <div className="input-with-icon">
                   <Lock className="input-icon" />
                   <Input
@@ -104,14 +105,14 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
-                    className="pr-11"
+                    className="pr-11 h-9"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="input-action text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>
@@ -119,28 +120,27 @@ const Login = () => {
               <div className="flex justify-end">
                 <a 
                   href="#" 
-                  className="text-sm text-primary hover:underline"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Forgot password?
                 </a>
               </div>
 
               {error && (
-                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+                <div className="p-2.5 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-xs text-center">
                   {error}
                 </div>
               )}
 
               <Button
                 type="submit"
-                size="lg"
                 className="w-full"
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  'Sign In'
+                  'Continue'
                 )}
               </Button>
             </form>
@@ -150,8 +150,8 @@ const Login = () => {
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border" />
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-3 text-muted-foreground">Or continue with</span>
+              <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
+                <span className="bg-card px-2 text-muted-foreground">Or</span>
               </div>
             </div>
 
@@ -159,12 +159,11 @@ const Login = () => {
             <Button
               type="button"
               variant="outline"
-              size="lg"
-              className="w-full gap-3"
+              className="w-full gap-2"
               onClick={() => handleDemoLogin('client')}
               disabled={isLoading}
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -185,30 +184,32 @@ const Login = () => {
               Continue with Google
             </Button>
 
-            {/* Demo Access (for testing) */}
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDemoLogin('client')}
-                disabled={isLoading}
-                className="text-xs"
-              >
-                Demo: Client
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDemoLogin('admin')}
-                disabled={isLoading}
-                className="text-xs"
-              >
-                Demo: Admin
-              </Button>
+            {/* Demo Access */}
+            <div className="pt-2 border-t border-border">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground text-center mb-2">Demo Access</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDemoLogin('client')}
+                  disabled={isLoading}
+                  className="text-xs h-8"
+                >
+                  Client
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDemoLogin('admin')}
+                  disabled={isLoading}
+                  className="text-xs h-8"
+                >
+                  Admin
+                </Button>
+              </div>
             </div>
-
           </div>
         </div>
       </div>
