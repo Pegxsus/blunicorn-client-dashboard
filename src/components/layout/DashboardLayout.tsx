@@ -11,10 +11,10 @@ import {
   Bell,
   Menu,
   X,
-  Zap,
   ChevronDown,
   Shield,
 } from 'lucide-react';
+import logo from '@/assets/logo.png';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,9 +80,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           {/* Logo */}
           <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
             <Link to="/dashboard" className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                <Zap className="w-5 h-5 text-primary-foreground" />
-              </div>
+              <img src={logo} alt="Blunicorn" className="w-9 h-9 object-contain" />
               <span className="text-lg font-bold text-foreground">Blunicorn</span>
             </Link>
             <Button

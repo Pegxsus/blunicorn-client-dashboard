@@ -5,35 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
-
-// Blunicorn Logo SVG Component
-const BlunicornLogo = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 40 40" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-    <path
-      d="M20 4L4 12V28L20 36L36 28V12L20 4Z"
-      fill="url(#logo-gradient)"
-      fillOpacity="0.2"
-      stroke="url(#logo-gradient)"
-      strokeWidth="1.5"
-    />
-    <path
-      d="M20 8L28 12.5V18L20 22.5L12 18V12.5L20 8Z"
-      fill="url(#logo-gradient)"
-    />
-    <path
-      d="M20 22.5V32M12 18L6 21.5M28 18L34 21.5"
-      stroke="url(#logo-gradient)"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-    <defs>
-      <linearGradient id="logo-gradient" x1="4" y1="4" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#60A5FA" />
-        <stop offset="1" stopColor="#A78BFA" />
-      </linearGradient>
-    </defs>
-  </svg>
-);
+import logo from '@/assets/logo.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -93,7 +65,7 @@ const Login = () => {
             {/* Logo & Header */}
             <div className="text-center space-y-4">
               <div className="flex items-center justify-center gap-3">
-                <BlunicornLogo className="w-10 h-10" />
+                <img src={logo} alt="Blunicorn" className="w-10 h-10 object-contain" />
                 <span className="text-xl font-bold text-foreground">Blunicorn</span>
               </div>
               <div>
