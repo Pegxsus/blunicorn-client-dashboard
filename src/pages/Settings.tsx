@@ -10,8 +10,10 @@ import { Separator } from '@/components/ui/separator';
 import { User, Bell, Shield, Palette } from 'lucide-react';
 
 const Settings = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { theme, setTheme } = useTheme();
+  
+  const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User';
 
   const getInitials = (name: string) => {
     return name
@@ -42,7 +44,7 @@ const Settings = () => {
           <div className="flex items-center gap-6">
             <Avatar className="w-20 h-20">
               <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-                {user ? getInitials(user.name) : '??'}
+                {getInitials(displayName)}
               </AvatarFallback>
             </Avatar>
             <div>
@@ -58,7 +60,7 @@ const Settings = () => {
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" defaultValue={user?.name} />
+              <Input id="name" defaultValue={displayName} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

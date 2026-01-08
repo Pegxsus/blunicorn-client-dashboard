@@ -15,11 +15,13 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, profile, role } = useAuth();
   
-  const userProjects = user?.role === 'admin' 
+  const userProjects = role === 'admin' 
     ? mockProjects 
     : mockProjects.filter(p => p.clientId === user?.id);
+
+  const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User';
 
   const stats = {
     total: userProjects.length,
@@ -36,7 +38,7 @@ const Dashboard = () => {
         {/* Welcome section */}
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-foreground">
-            Welcome back, {user?.name?.split(' ')[0]}
+            Welcome back, {displayName.split(' ')[0]}
           </h1>
           <p className="text-sm text-muted-foreground">
             Here's what's happening with your automation projects.
