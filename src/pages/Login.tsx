@@ -77,50 +77,61 @@ const Login = () => {
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px] animate-[float_8s_ease-in-out_infinite]" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-secondary/15 rounded-full blur-[100px] animate-[float_10s_ease-in-out_infinite_reverse]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[150px] animate-[pulse_6s_ease-in-out_infinite]" />
-        <div className="absolute inset-0 bg-[linear-gradient(hsl(var(--border)/0.03)_1px,transparent_1px),linear-gradient(90deg,hsl(var(--border)/0.03)_1px,transparent_1px)] bg-[size:64px_64px]" />
+        {/* Primary glow - top right */}
+        <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-primary/15 rounded-full blur-[150px] animate-[pulse_8s_ease-in-out_infinite]" />
+        {/* Secondary glow - bottom left */}
+        <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-secondary/20 rounded-full blur-[130px] animate-[pulse_10s_ease-in-out_infinite_reverse]" />
+        {/* Center subtle glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[180px]" />
+        {/* Grid overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(hsl(var(--border)/0.05)_1px,transparent_1px),linear-gradient(90deg,hsl(var(--border)/0.05)_1px,transparent_1px)] bg-[size:60px_60px]" />
       </div>
 
-      {/* Top Bar */}
-      <div className="p-4 border-b border-border opacity-0 animate-fade-in">
+      {/* Top Bar - Back to Home */}
+      <div className="p-6 opacity-0 animate-fade-in">
         <Link 
           to="/" 
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-all duration-300 hover:-translate-x-1"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-all duration-300 group"
         >
-          <ArrowLeft className="w-3.5 h-3.5 transition-transform duration-300 group-hover:-translate-x-1" />
-          Back
+          <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
+          Back to Home
         </Link>
       </div>
 
       {/* Centered Auth Card */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-sm">
-          <div className="auth-card p-6 space-y-6 opacity-0 animate-blur-in hover-lift">
+      <div className="flex-1 flex items-center justify-center p-6 -mt-16">
+        <div className="w-full max-w-md">
+          <div className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-8 space-y-8 opacity-0 animate-blur-in shadow-2xl shadow-primary/5">
+            
             {/* Logo & Header */}
-            <div className="text-center space-y-3">
-              <div className="flex items-center justify-center gap-2 opacity-0 animate-bounce-in delay-100">
-                <img src={logo} alt="Blunicorn" className="w-8 h-8 object-contain rounded-lg transition-transform duration-300 hover:scale-110 hover:rotate-6" />
-                <span className="text-base font-semibold text-foreground">Blunicorn</span>
+            <div className="text-center space-y-4">
+              <div className="flex items-center justify-center gap-3 opacity-0 animate-bounce-in delay-100">
+                <img 
+                  src={logo} 
+                  alt="Blunicorn" 
+                  className="w-10 h-10 object-contain rounded-lg transition-transform duration-300 hover:scale-110" 
+                />
+                <span className="text-xl font-semibold text-foreground">Blunicorn</span>
               </div>
-              <div className="opacity-0 animate-slide-up delay-200">
-                <h1 className="text-lg font-semibold text-foreground">
+              <div className="opacity-0 animate-slide-up delay-200 space-y-2">
+                <h1 className="text-2xl font-bold text-foreground">
                   {isSignUp ? 'Create an account' : 'Welcome back'}
                 </h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {isSignUp ? 'Enter your details to get started' : 'Enter your credentials to continue'}
+                <p className="text-muted-foreground">
+                  {isSignUp 
+                    ? 'Enter your details to get started' 
+                    : 'Enter your credentials to access your account'}
                 </p>
               </div>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               {isSignUp && (
-                <div className="space-y-1.5 opacity-0 animate-slide-up delay-300">
-                  <Label htmlFor="displayName" className="text-xs">Display Name</Label>
-                  <div className="input-with-icon group">
-                    <User className="input-icon transition-colors duration-300 group-focus-within:text-primary" />
+                <div className="space-y-2 opacity-0 animate-slide-up delay-300">
+                  <Label htmlFor="displayName" className="text-sm font-medium">Display Name</Label>
+                  <div className="relative group">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors duration-300 group-focus-within:text-primary" />
                     <Input
                       id="displayName"
                       type="text"
@@ -128,16 +139,16 @@ const Login = () => {
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
                       autoComplete="name"
-                      className="h-9 transition-all duration-300 focus:shadow-[0_0_20px_-5px_hsl(var(--primary)/0.3)]"
+                      className="h-12 pl-12 bg-muted/50 border-border/50 rounded-xl transition-all duration-300 focus:bg-muted focus:border-primary/50 focus:shadow-[0_0_20px_-5px_hsl(var(--primary)/0.3)]"
                     />
                   </div>
                 </div>
               )}
 
-              <div className="space-y-1.5 opacity-0 animate-slide-up delay-300">
-                <Label htmlFor="email" className="text-xs">Email</Label>
-                <div className="input-with-icon group">
-                  <Mail className="input-icon transition-colors duration-300 group-focus-within:text-primary" />
+              <div className="space-y-2 opacity-0 animate-slide-up delay-300">
+                <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors duration-300 group-focus-within:text-primary" />
                   <Input
                     id="email"
                     type="email"
@@ -145,15 +156,15 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
-                    className="h-9 transition-all duration-300 focus:shadow-[0_0_20px_-5px_hsl(var(--primary)/0.3)]"
+                    className="h-12 pl-12 bg-muted/50 border-border/50 rounded-xl transition-all duration-300 focus:bg-muted focus:border-primary/50 focus:shadow-[0_0_20px_-5px_hsl(var(--primary)/0.3)]"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5 opacity-0 animate-slide-up delay-400">
-                <Label htmlFor="password" className="text-xs">Password</Label>
-                <div className="input-with-icon group">
-                  <Lock className="input-icon transition-colors duration-300 group-focus-within:text-primary" />
+              <div className="space-y-2 opacity-0 animate-slide-up delay-400">
+                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors duration-300 group-focus-within:text-primary" />
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
@@ -161,14 +172,14 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                    className="pr-11 h-9 transition-all duration-300 focus:shadow-[0_0_20px_-5px_hsl(var(--primary)/0.3)]"
+                    className="h-12 pl-12 pr-12 bg-muted/50 border-border/50 rounded-xl transition-all duration-300 focus:bg-muted focus:border-primary/50 focus:shadow-[0_0_20px_-5px_hsl(var(--primary)/0.3)]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="input-action text-muted-foreground hover:text-foreground transition-all duration-300 hover:scale-110"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-all duration-300 hover:scale-110"
                   >
-                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
@@ -177,7 +188,7 @@ const Login = () => {
                 <div className="flex justify-end opacity-0 animate-fade-in delay-500">
                   <a 
                     href="#" 
-                    className="text-xs text-muted-foreground hover:text-foreground transition-all duration-300 hover:translate-x-0.5"
+                    className="text-sm text-primary hover:text-primary/80 transition-colors duration-300"
                   >
                     Forgot password?
                   </a>
@@ -185,7 +196,7 @@ const Login = () => {
               )}
 
               {error && (
-                <div className="p-2.5 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-xs text-center animate-scale-in">
+                <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center animate-scale-in">
                   {error}
                 </div>
               )}
@@ -193,11 +204,11 @@ const Login = () => {
               <div className="opacity-0 animate-slide-up delay-500">
                 <Button
                   type="submit"
-                  className="w-full transition-all duration-300 hover:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.5)] hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full h-12 rounded-full text-base font-medium transition-all duration-300 hover:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.6)] hover:scale-[1.02] active:scale-[0.98]"
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     isSignUp ? 'Create Account' : 'Sign In'
                   )}
@@ -205,12 +216,12 @@ const Login = () => {
               </div>
 
               {/* Divider */}
-              <div className="relative opacity-0 animate-fade-in delay-600">
+              <div className="relative opacity-0 animate-fade-in delay-600 py-2">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-border" />
+                  <span className="w-full border-t border-border/50" />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                <div className="relative flex justify-center text-xs uppercase tracking-wider">
+                  <span className="bg-card/80 px-4 text-muted-foreground">Or continue with</span>
                 </div>
               </div>
 
@@ -219,29 +230,29 @@ const Login = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full group transition-all duration-300 hover:shadow-[0_0_25px_-5px_hsl(var(--primary)/0.3)] hover:border-primary/50 active:scale-[0.98]"
+                  className="w-full h-12 rounded-full text-base font-medium bg-muted/50 border-border/50 hover:bg-muted hover:border-border transition-all duration-300 hover:shadow-[0_0_25px_-5px_hsl(var(--primary)/0.2)] active:scale-[0.98] group"
                   onClick={handleGoogleSignIn}
                   disabled={isGoogleLoading || isLoading}
                 >
                   {isGoogleLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>
-                      <svg className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 mr-3 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24">
                         <path
-                          fill="currentColor"
+                          fill="#4285F4"
                           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                         />
                         <path
-                          fill="currentColor"
+                          fill="#34A853"
                           d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
                         />
                         <path
-                          fill="currentColor"
+                          fill="#FBBC05"
                           d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
                         />
                         <path
-                          fill="currentColor"
+                          fill="#EA4335"
                           d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                         />
                       </svg>
@@ -251,6 +262,24 @@ const Login = () => {
                 </Button>
               </div>
             </form>
+
+            {/* Toggle Sign Up / Sign In */}
+            <div className="text-center opacity-0 animate-fade-in delay-700">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError('');
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-300"
+              >
+                {isSignUp ? (
+                  <>Already have an account? <span className="text-primary font-medium hover:underline">Sign in</span></>
+                ) : (
+                  <>Don't have an account? <span className="text-primary font-medium hover:underline">Sign up</span></>
+                )}
+              </button>
+            </div>
 
           </div>
         </div>
