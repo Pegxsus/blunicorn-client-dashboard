@@ -58,7 +58,7 @@ const statusLabels: Record<ProjectStatus, string> = {
 const statusOptions: ProjectStatus[] = ['discovery', 'in-progress', 'testing', 'ready', 'completed'];
 
 const Admin = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const [searchParams] = useSearchParams();
   const selectedProjectId = searchParams.get('project');
   
@@ -67,8 +67,9 @@ const Admin = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  // Redirect non-admin users
-  if (user?.role !== 'admin') {
+  // Redirect non-admin users - Note: This is a UX check only.
+  // Backend operations MUST be protected by RLS policies using has_role() function.
+  if (role !== 'admin') {
     return <Navigate to="/dashboard" replace />;
   }
 

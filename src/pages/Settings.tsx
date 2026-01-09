@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,11 +9,18 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { User, Bell, Shield, Palette } from 'lucide-react';
+import { User, Bell, Shield, Palette, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const Settings = () => {
   const { user, profile } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { toast } = useToast();
+  
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   
   const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User';
 
@@ -21,6 +30,71 @@ const Settings = () => {
       .map((n) => n[0])
       .join('')
       .toUpperCase();
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate inputs
+    if (!newPassword || !confirmPassword) {
+      toast({
+        title: 'Error',
+        description: 'Please fill in all password fields.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      toast({
+        title: 'Error',
+        description: 'Password must be at least 6 characters long.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: 'Error',
+        description: 'New passwords do not match.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setIsUpdatingPassword(true);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      
+      if (error) {
+        toast({
+          title: 'Error',
+          description: error.message,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Success',
+          description: 'Your password has been updated successfully.',
+        });
+        // Clear form
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
 
   return (
@@ -130,23 +204,44 @@ const Settings = () => {
           </div>
           <Separator />
 
-          <div className="space-y-4">
+          <form onSubmit={handlePasswordUpdate} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="current-password">Current Password</Label>
-              <Input id="current-password" type="password" />
+              <Input 
+                id="current-password" 
+                type="password" 
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Enter current password"
+              />
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="new-password">New Password</Label>
-                <Input id="new-password" type="password" />
+                <Input 
+                  id="new-password" 
+                  type="password" 
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input id="confirm-password" type="password" />
+                <Input 
+                  id="confirm-password" 
+                  type="password" 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                />
               </div>
             </div>
-            <Button>Update Password</Button>
-          </div>
+            <Button type="submit" disabled={isUpdatingPassword}>
+              {isUpdatingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Update Password
+            </Button>
+          </form>
         </section>
 
         {/* Appearance Section */}
