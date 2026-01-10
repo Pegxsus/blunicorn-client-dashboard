@@ -1,12 +1,12 @@
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ProjectCard from '@/components/projects/ProjectCard';
-import { mockProjects } from '@/lib/mock-data';
 import { ProjectStatus } from '@/types';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Filter, FolderOpen } from 'lucide-react';
+import { useProjects } from '@/hooks/useProjects';
 import {
   Select,
   SelectContent,
@@ -25,13 +25,14 @@ const statusOptions: { value: ProjectStatus | 'all'; label: string }[] = [
 ];
 
 const Projects = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'all'>('all');
+  const { data: projects = [], isLoading } = useProjects();
 
-  const userProjects = user?.role === 'admin'
-    ? mockProjects
-    : mockProjects.filter((p) => p.clientId === user?.id);
+  const userProjects = role === 'admin'
+    ? projects
+    : projects.filter((p) => p.clientId === user?.id);
 
   const filteredProjects = userProjects.filter((project) => {
     const matchesSearch =

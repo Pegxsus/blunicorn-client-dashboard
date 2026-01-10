@@ -4,15 +4,14 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import MilestoneTimeline from '@/components/projects/MilestoneTimeline';
 import DeliverablesList from '@/components/projects/DeliverablesList';
 import FeedbackSection from '@/components/projects/FeedbackSection';
-import { mockProjects } from '@/lib/mock-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
   CheckCircle2,
   FileText,
   MessageSquare,
@@ -20,6 +19,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ProjectStatus } from '@/types';
+import { useProjects } from '@/hooks/useProjects';
 
 const statusLabels: Record<ProjectStatus, string> = {
   discovery: 'Discovery',
@@ -33,8 +33,9 @@ const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { data: projects = [], isLoading } = useProjects();
 
-  const project = mockProjects.find((p) => p.id === id);
+  const project = projects.find((p) => p.id === id);
 
   if (!project) {
     return (

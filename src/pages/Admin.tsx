@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { mockProjects } from '@/lib/mock-data';
 import { Project, ProjectStatus, Milestone } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,18 +33,24 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { 
-  Plus, 
-  Edit, 
-  Upload, 
-  Bell, 
+import {
+  Plus,
+  Edit,
+  Upload,
+  Bell,
   Eye,
   CheckCircle2,
   Search,
-  Users
+  Users,
+  Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useProjects } from '@/hooks/useProjects';
+import { useClients } from '@/hooks/useClients';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 const statusLabels: Record<ProjectStatus, string> = {
   discovery: 'Discovery',
@@ -58,17 +63,26 @@ const statusLabels: Record<ProjectStatus, string> = {
 const statusOptions: ProjectStatus[] = ['discovery', 'in-progress', 'testing', 'ready', 'completed'];
 
 const Admin = () => {
-  const { user, role } = useAuth();
+  const { role } = useAuth();
   const [searchParams] = useSearchParams();
   const selectedProjectId = searchParams.get('project');
-  
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const queryClient = useQueryClient();
+
+  const { data: projects = [], isLoading: isProjectsLoading } = useProjects();
+  const { data: clients = [], isLoading: isClientsLoading } = useClients();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
-  // Redirect non-admin users - Note: This is a UX check only.
-  // Backend operations MUST be protected by RLS policies using has_role() function.
+  // New Project State
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectClient, setNewProjectClient] = useState('');
+  const [newProjectDescription, setNewProjectDescription] = useState('');
+  const [newProjectDate, setNewProjectDate] = useState('');
+
+  // Redirect non-admin users
   if (role !== 'admin') {
     return <Navigate to="/dashboard" replace />;
   }
@@ -83,67 +97,54 @@ const Admin = () => {
     ? projects.find((p) => p.id === selectedProjectId)
     : null;
 
-  const handleStatusChange = (projectId: string, newStatus: ProjectStatus) => {
-    setProjects((prev) =>
-      prev.map((p) =>
-        p.id === projectId
-          ? {
-              ...p,
-              status: newStatus,
-              progress: calculateProgress(newStatus, p.milestones),
-              updatedAt: new Date().toISOString(),
-            }
-          : p
-      )
-    );
+  const handleCreateProject = async () => {
+    if (!newProjectName || !newProjectClient) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const { error } = await supabase.from('projects').insert({
+        title: newProjectName,
+        client_id: newProjectClient,
+        description: newProjectDescription,
+        estimated_delivery: newProjectDate ? new Date(newProjectDate).toISOString() : null,
+        status: 'discovery',
+        progress: 0
+      });
+
+      if (error) throw error;
+
+      toast.success("Project created successfully");
+      setCreateDialogOpen(false);
+      setNewProjectName('');
+      setNewProjectClient('');
+      setNewProjectDescription('');
+      setNewProjectDate('');
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    } catch (error: any) {
+      console.error('Error creating project:', error);
+      toast.error(error.message || "Failed to create project");
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  const handleMilestoneToggle = (projectId: string, milestoneId: string) => {
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id !== projectId) return p;
-        
-        const updatedMilestones = p.milestones.map((m) => {
-          if (m.id !== milestoneId) return m;
-          
-          const newStatus = m.status === 'completed' ? 'pending' : 'completed';
-          return {
-            ...m,
-            status: newStatus as Milestone['status'],
-            completedAt: newStatus === 'completed' ? new Date().toISOString() : undefined,
-          };
-        });
+  const handleStatusChange = async (projectId: string, newStatus: ProjectStatus) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ status: newStatus })
+        .eq('id', projectId);
 
-        // Update active milestone
-        const firstPending = updatedMilestones.findIndex((m) => m.status !== 'completed');
-        const finalMilestones = updatedMilestones.map((m, i) => ({
-          ...m,
-          status: m.status === 'completed' 
-            ? 'completed' 
-            : i === firstPending 
-              ? 'active' 
-              : 'pending',
-        })) as Milestone[];
+      if (error) throw error;
 
-        const completedCount = finalMilestones.filter((m) => m.status === 'completed').length;
-        const progress = Math.round((completedCount / finalMilestones.length) * 100);
-
-        return {
-          ...p,
-          milestones: finalMilestones,
-          progress,
-          updatedAt: new Date().toISOString(),
-        };
-      })
-    );
-  };
-
-  const calculateProgress = (status: ProjectStatus, milestones: Milestone[]): number => {
-    if (status === 'completed') return 100;
-    if (status === 'ready') return 100;
-    
-    const completedCount = milestones.filter((m) => m.status === 'completed').length;
-    return Math.round((completedCount / milestones.length) * 100);
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast.success("Status updated");
+    } catch (error: any) {
+      toast.error("Failed to update status");
+    }
   };
 
   return (
@@ -171,34 +172,51 @@ const Admin = () => {
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label>Project Name</Label>
-                  <Input placeholder="E.g., CRM Integration Workflow" />
+                  <Label>Project Name *</Label>
+                  <Input
+                    placeholder="E.g., CRM Integration Workflow"
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Client</Label>
-                  <Select>
+                  <Label>Client *</Label>
+                  <Select value={newProjectClient} onValueChange={setNewProjectClient}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a client" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Alex Johnson</SelectItem>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.displayName} ({client.email})
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Description</Label>
-                  <Textarea placeholder="Brief project description..." />
+                  <Textarea
+                    placeholder="Brief project description..."
+                    value={newProjectDescription}
+                    onChange={(e) => setNewProjectDescription(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Estimated Delivery</Label>
-                  <Input type="date" />
+                  <Input
+                    type="date"
+                    value={newProjectDate}
+                    onChange={(e) => setNewProjectDate(e.target.value)}
+                  />
                 </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={() => setCreateDialogOpen(false)}>
+                <Button onClick={handleCreateProject} disabled={isCreating}>
+                  {isCreating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   Create Project
                 </Button>
               </DialogFooter>
@@ -285,182 +303,93 @@ const Admin = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProjects.map((project) => (
-                <TableRow 
-                  key={project.id}
-                  className={cn(
-                    selectedProject?.id === project.id && 'bg-primary/5'
-                  )}
-                >
-                  <TableCell>
-                    <div>
-                      <p className="font-medium text-foreground">{project.name}</p>
-                      <p className="text-sm text-muted-foreground truncate max-w-[200px]">
-                        {project.description}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {project.clientName}
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={project.status}
-                      onValueChange={(value) =>
-                        handleStatusChange(project.id, value as ProjectStatus)
-                      }
-                    >
-                      <SelectTrigger className="w-[140px] h-8">
-                        <Badge variant={project.status} className="font-normal">
-                          {statusLabels[project.status]}
-                        </Badge>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statusOptions.map((status) => (
-                          <SelectItem key={status} value={status}>
-                            <Badge variant={status}>{statusLabels[status]}</Badge>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full progress-gradient"
-                          style={{ width: `${project.progress}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        {project.progress}%
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {format(new Date(project.updatedAt), 'MMM d, yyyy')}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setEditingProject(project)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        asChild
-                      >
-                        <a href={`/projects/${project.id}`}>
-                          <Eye className="w-4 h-4" />
-                        </a>
-                      </Button>
-                      <Button variant="ghost" size="icon">
-                        <Bell className="w-4 h-4" />
-                      </Button>
-                    </div>
+              {isProjectsLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : filteredProjects.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    No projects found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredProjects.map((project) => (
+                  <TableRow
+                    key={project.id}
+                    className={cn(
+                      selectedProject?.id === project.id && 'bg-primary/5'
+                    )}
+                  >
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-foreground">{project.name}</p>
+                        <p className="text-sm text-muted-foreground truncate max-w-[200px]">
+                          {project.description}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {project.clientName}
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={project.status}
+                        onValueChange={(value) =>
+                          handleStatusChange(project.id, value as ProjectStatus)
+                        }
+                      >
+                        <SelectTrigger className="w-[140px] h-8">
+                          <Badge variant={project.status} className="font-normal">
+                            {statusLabels[project.status]}
+                          </Badge>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map((status) => (
+                            <SelectItem key={status} value={status}>
+                              <Badge variant={status}>{statusLabels[status]}</Badge>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full progress-gradient"
+                            style={{ width: `${project.progress}%` }}
+                          />
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {project.progress}%
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {format(new Date(project.updatedAt), 'MMM d, yyyy')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          asChild
+                        >
+                          <a href={`/projects/${project.id}`}>
+                            <Eye className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
-
-        {/* Edit Project Dialog */}
-        <Dialog open={!!editingProject} onOpenChange={() => setEditingProject(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Edit Project</DialogTitle>
-              <DialogDescription>
-                Update project details and milestone status.
-              </DialogDescription>
-            </DialogHeader>
-            {editingProject && (
-              <div className="space-y-6 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Project Name</Label>
-                    <Input defaultValue={editingProject.name} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select
-                      defaultValue={editingProject.status}
-                      onValueChange={(value) =>
-                        handleStatusChange(editingProject.id, value as ProjectStatus)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statusOptions.map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {statusLabels[status]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Textarea defaultValue={editingProject.description} />
-                </div>
-
-                <div className="space-y-3">
-                  <Label>Milestones</Label>
-                  <div className="space-y-2">
-                    {editingProject.milestones.map((milestone) => (
-                      <div
-                        key={milestone.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Switch
-                            checked={milestone.status === 'completed'}
-                            onCheckedChange={() =>
-                              handleMilestoneToggle(editingProject.id, milestone.id)
-                            }
-                          />
-                          <div>
-                            <p className="font-medium text-sm">{milestone.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {milestone.description}
-                            </p>
-                          </div>
-                        </div>
-                        {milestone.completedAt && (
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date(milestone.completedAt), 'MMM d')}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Internal Notes</Label>
-                  <Textarea 
-                    placeholder="Add internal notes (not visible to client)..."
-                    className="min-h-[80px]"
-                  />
-                </div>
-              </div>
-            )}
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditingProject(null)}>
-                Cancel
-              </Button>
-              <Button onClick={() => setEditingProject(null)}>Save Changes</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   );

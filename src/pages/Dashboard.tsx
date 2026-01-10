@@ -1,25 +1,27 @@
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ProjectCard from '@/components/projects/ProjectCard';
-import { mockProjects, mockNotifications } from '@/lib/mock-data';
+import { mockNotifications } from '@/lib/mock-data';
 import { Badge } from '@/components/ui/badge';
-import { 
-  FolderOpen, 
-  CheckCircle2, 
-  Clock, 
+import {
+  FolderOpen,
+  CheckCircle2,
+  Clock,
   TrendingUp,
   Bell,
   ArrowRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useProjects } from '@/hooks/useProjects';
 
 const Dashboard = () => {
   const { user, profile, role } = useAuth();
-  
-  const userProjects = role === 'admin' 
-    ? mockProjects 
-    : mockProjects.filter(p => p.clientId === user?.id);
+  const { data: projects = [], isLoading } = useProjects();
+
+  const userProjects = role === 'admin'
+    ? projects
+    : projects.filter(p => p.clientId === user?.id);
 
   const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User';
 

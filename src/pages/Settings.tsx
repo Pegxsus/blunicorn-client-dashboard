@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,13 +16,27 @@ const Settings = () => {
   const { user, profile } = useAuth();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
-  
+
+  // Profile State
+  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+  // Password State
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  
-  const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User';
+
+  // Initialize profile state when data is available
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.display_name || '');
+      setEmail(profile.email || '');
+    } else if (user) {
+      setEmail(user.email || '');
+    }
+  }, [profile, user]);
 
   const getInitials = (name: string) => {
     return name
@@ -32,9 +46,41 @@ const Settings = () => {
       .toUpperCase();
   };
 
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setIsUpdatingProfile(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ display_name: displayName })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Profile updated successfully.',
+      });
+
+      // Note: AuthContext should ideally listen to changes or be manually refreshed,
+      // but for now, the local state reflects the change.
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update profile.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate inputs
     if (!newPassword || !confirmPassword) {
       toast({
@@ -44,7 +90,7 @@ const Settings = () => {
       });
       return;
     }
-    
+
     if (newPassword.length < 6) {
       toast({
         title: 'Error',
@@ -53,7 +99,7 @@ const Settings = () => {
       });
       return;
     }
-    
+
     if (newPassword !== confirmPassword) {
       toast({
         title: 'Error',
@@ -62,14 +108,14 @@ const Settings = () => {
       });
       return;
     }
-    
+
     setIsUpdatingPassword(true);
-    
+
     try {
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
-      
+
       if (error) {
         toast({
           title: 'Error',
@@ -118,7 +164,7 @@ const Settings = () => {
           <div className="flex items-center gap-6">
             <Avatar className="w-20 h-20">
               <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-                {getInitials(displayName)}
+                {getInitials(displayName || 'User')}
               </AvatarFallback>
             </Avatar>
             <div>
@@ -131,18 +177,33 @@ const Settings = () => {
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" defaultValue={displayName} />
+          <form onSubmit={handleProfileUpdate} className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" defaultValue={user?.email} />
-            </div>
-          </div>
 
-          <Button>Save Changes</Button>
+            <Button type="submit" disabled={isUpdatingProfile}>
+              {isUpdatingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
+          </form>
         </section>
 
         {/* Notifications Section */}
@@ -207,9 +268,9 @@ const Settings = () => {
           <form onSubmit={handlePasswordUpdate} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="current-password">Current Password</Label>
-              <Input 
-                id="current-password" 
-                type="password" 
+              <Input
+                id="current-password"
+                type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter current password"
@@ -218,9 +279,9 @@ const Settings = () => {
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="new-password">New Password</Label>
-                <Input 
-                  id="new-password" 
-                  type="password" 
+                <Input
+                  id="new-password"
+                  type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
@@ -228,9 +289,9 @@ const Settings = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input 
-                  id="confirm-password" 
-                  type="password" 
+                <Input
+                  id="confirm-password"
+                  type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
@@ -259,8 +320,8 @@ const Settings = () => {
                 Toggle between light and dark theme
               </p>
             </div>
-            <Switch 
-              checked={theme === 'dark'} 
+            <Switch
+              checked={theme === 'dark'}
               onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
             />
           </div>
