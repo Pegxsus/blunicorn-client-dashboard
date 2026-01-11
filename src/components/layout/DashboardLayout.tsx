@@ -297,13 +297,23 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                         key={notification.id}
                         className="flex flex-col items-start p-4 cursor-pointer"
                         onClick={() => {
-                          // projects/project_id 
-                          // But notification logic might vary. Assuming project_id exists:
                           if (!notification.read) {
                             markAsRead(notification.id);
                           }
                           if (notification.project_id) {
-                            navigate(`/projects/${notification.project_id}`);
+                            // Navigate to feedback tab if it's a feedback notification
+                            const isFeedbackNotification = notification.title?.toLowerCase().includes('feedback');
+                            const route = `/projects/${notification.project_id}`;
+                            navigate(route);
+
+                            // After navigation, switch to feedback tab if needed
+                            if (isFeedbackNotification) {
+                              // Small delay to ensure the page loads first
+                              setTimeout(() => {
+                                const feedbackTab = document.querySelector('[value="feedback"]') as HTMLElement;
+                                feedbackTab?.click();
+                              }, 100);
+                            }
                           }
                         }}
                       >

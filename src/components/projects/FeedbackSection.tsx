@@ -88,6 +88,7 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
       });
 
       setMessages(combinedMessages);
+      console.log('Fetched messages with profiles:', combinedMessages);
     };
 
     fetchMessages();
@@ -209,10 +210,7 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
       <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
         {messages.map((item) => {
           const isCurrentUser = isOwnMessage(item.author_id);
-          // Ideally we would fetch the author's name, but for this MVP we can show 'Me' or 'Client/Admin'
-          // Since we don't have the joined profile readily available in the real-time payload without complex logic,
-          // we'll simplify: if it's me -> Me. If not me -> Admin (or Client depending on viewer)
-          const authorLabel = isCurrentUser ? displayName : 'Admin'; // Assumption: mostly User <-> Admin chat
+          const authorLabel = item.author_name || 'User';
 
           return (
             <div
