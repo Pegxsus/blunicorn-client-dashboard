@@ -1,7 +1,9 @@
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ProjectCard from '@/components/projects/ProjectCard';
-import { mockNotifications } from '@/lib/mock-data';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from 'react';
+// import { mockNotifications } from '@/lib/mock-data';
 import { Badge } from '@/components/ui/badge';
 import {
   FolderOpen,
@@ -32,7 +34,51 @@ const Dashboard = () => {
     ready: userProjects.filter(p => p.status === 'ready').length,
   };
 
-  const recentNotifications = mockNotifications.slice(0, 3);
+  const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchNotifications = async () => {
+      const { data } = await supabase
+        .from('notifications' as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (data) setRecentNotifications(data);
+    };
+
+    fetchNotifications();
+
+    // Subscribe to real-time changes for dashboard widget
+    const channel = supabase
+      .channel('dashboard-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setRecentNotifications((prev) => [payload.new, ...prev].slice(0, 3));
+          } else if (payload.eventType === 'UPDATE') {
+            setRecentNotifications((prev) =>
+              prev.map((n) => (n.id === payload.new.id ? payload.new : n))
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   return (
     <DashboardLayout>
@@ -134,7 +180,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-medium text-foreground">Recent Updates</h2>
               <Badge variant="outline" className="text-[10px] h-5">
-                {mockNotifications.filter(n => !n.read).length} new
+                {recentNotifications.filter(n => !n.read).length} new
               </Badge>
             </div>
 
@@ -142,7 +188,7 @@ const Dashboard = () => {
               {recentNotifications.map((notification) => (
                 <Link
                   key={notification.id}
-                  to={notification.projectId ? `/projects/${notification.projectId}` : '#'}
+                  to={notification.project_id ? `/projects/${notification.project_id}` : '#'}
                   className="flex items-start gap-2.5 p-3 hover:bg-muted/50 transition-colors"
                 >
                   <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${notification.read ? 'bg-muted-foreground/30' : 'bg-primary'}`} />

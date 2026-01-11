@@ -133,15 +133,38 @@ const Admin = () => {
 
   const handleStatusChange = async (projectId: string, newStatus: ProjectStatus) => {
     try {
+      // Determine default progress based on status
+      let newProgress = 0;
+      switch (newStatus) {
+        case 'discovery':
+          newProgress = 0;
+          break;
+        case 'in-progress':
+          newProgress = 25;
+          break;
+        case 'testing':
+          newProgress = 75;
+          break;
+        case 'ready':
+          newProgress = 90;
+          break;
+        case 'completed':
+          newProgress = 100;
+          break;
+      }
+
       const { error } = await supabase
         .from('projects')
-        .update({ status: newStatus })
+        .update({
+          status: newStatus,
+          progress: newProgress
+        })
         .eq('id', projectId);
 
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      toast.success("Status updated");
+      toast.success("Status and progress updated");
     } catch (error: any) {
       toast.error("Failed to update status");
     }

@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -22,8 +22,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { mockNotifications } from '@/lib/mock-data';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { supabase } from '@/integrations/supabase/client';
+// import { mockNotifications } from '@/lib/mock-data'; // Removed mock data usage
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -34,8 +35,108 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
-  const unreadNotifications = mockNotifications.filter(n => !n.read).length;
+  useEffect(() => {
+    if (!user) return;
+
+    // Fetch initial notifications
+    const fetchNotifications = async () => {
+      const { data } = await supabase
+        .from('notifications' as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (data) setNotifications(data);
+    };
+
+    fetchNotifications();
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('notifications-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setNotifications((prev) => [payload.new, ...prev]);
+            playNotificationSound();
+          } else if (payload.eventType === 'UPDATE') {
+            setNotifications((prev) =>
+              prev.map((n) => (n.id === payload.new.id ? payload.new : n))
+            );
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Subscribed to notifications');
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  const playNotificationSound = () => {
+    // Professional "Ping" sound (Base64)
+    const audio = new Audio("data:audio/mp3;base64,SUQzBAAAAAABAFRYVFgAAAASAAADbWFqb3JfYnJhbmQAbXA0MgBUWFJYAAAAEQAAA21pbm9yX3ZlcnNpb24AMABUWFJYAAAAIAAAA2NvbXBhdGlibGVfYnJhbmRzAGlzb21tcDQyAP/7UAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAInfoAAAApV1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111/7UAAAAAAAADAAJAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABMYXZjNTguNTQuMTAwWAQAAAAAAABABAAAAAAAAAABAAAAHwAAAAEAAADnAAAAAQAAAAAAAAAAAP/7UAAAABqQcQYA8AAACyBw5gDwAAAEVFBEAAAGYABAAAAAAAAAAAAAAIAGYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASAAKoKj444wGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDAYGDAwMDCQ5T//7UAAAAA8gAPIALQAIAAAOgBAAAAAEEFCRwAAAO8ABAAAAABAAEAEAAgEAEAAQAAgAAAABQASAAAAEAAQAAAAAAgAAAAAAAAAAAAAAAgEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAKgunjjjAYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMBgYMDAwMAAD/+5AAAEAAAEAAAAABAAAEAAAAABAAAI1gAAAAAAjWAAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAKquAAAAAAqq4AAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAKy2AAAAAArLYAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAK64AAAAAArrgAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAK64AAAAAArrgAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAK64AAAAAArrgAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAK64AAAAAArrgAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAK64AAAAAArrgAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAK64AAAAAArrgAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAK64AAAAAArrgAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAK64AAAAAArrgAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAK64AAAAAArrgAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAK64AAAAAArrgAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAK64AAAAAArrgAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//7UAAAAAAIAAIAAAAAAAgAAABAAAAALAAK64AAAAAArrgAAAAAACgAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    audio.volume = 0.5;
+    audio.play().catch(e => console.error("Error playing sound:", e));
+  };
+
+  const markAsRead = async (id: string) => {
+    if (!id) return;
+    try {
+      // Optimistic update
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+
+      const { error } = await supabase
+        .from('notifications' as any)
+        .update({ read: true })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    } catch (e) {
+      console.error('Exception in markAsRead', e);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    if (notifications.length === 0) return;
+
+    // Optimistic update - clear list immediately
+    setNotifications([]);
+
+    try {
+      const { error } = await supabase
+        .from('notifications' as any)
+        .delete()
+        .eq('user_id', user?.id);
+
+      if (error) {
+        console.error('Error clearing notifications:', error);
+        // We could revert here, but for 'clear all' silent failure is often acceptable or we just fetch again
+        // fetchNotifications();
+      }
+    } catch (e) {
+      console.error('Exception in clearAllNotifications', e);
+    }
+  };
+
+  const unreadNotifications = notifications.filter(n => !n.read).length;
 
   const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User';
 
@@ -98,9 +199,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           {/* Navigation */}
           <nav className="flex-1 space-y-0.5 p-3">
             {navigation.map((item) => {
-              const isActive = location.pathname === item.href || 
+              const isActive = location.pathname === item.href ||
                 (item.href !== '/dashboard' && location.pathname.startsWith(item.href));
-              
+
               return (
                 <Link
                   key={item.name}
@@ -124,6 +225,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <div className="p-3 border-t border-sidebar-border">
             <div className="flex items-center gap-2.5">
               <Avatar className="w-8 h-8">
+                <AvatarImage src={profile?.avatar_url || ''} />
                 <AvatarFallback className="bg-muted text-foreground text-xs">
                   {getInitials(displayName)}
                 </AvatarFallback>
@@ -174,17 +276,34 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">
                 <div className="px-4 py-3 border-b border-border">
-                  <h3 className="font-semibold">Notifications</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">Notifications</h3>
+                    {notifications.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-6 px-2 text-muted-foreground hover:text-destructive"
+                        onClick={clearAllNotifications}
+                      >
+                        Clear all
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="max-h-[300px] overflow-y-auto">
-                  {mockNotifications.length > 0 ? (
-                    mockNotifications.map((notification) => (
+                  {notifications.length > 0 ? (
+                    notifications.map((notification) => (
                       <DropdownMenuItem
                         key={notification.id}
                         className="flex flex-col items-start p-4 cursor-pointer"
                         onClick={() => {
-                          if (notification.projectId) {
-                            navigate(`/projects/${notification.projectId}`);
+                          // projects/project_id 
+                          // But notification logic might vary. Assuming project_id exists:
+                          if (!notification.read) {
+                            markAsRead(notification.id);
+                          }
+                          if (notification.project_id) {
+                            navigate(`/projects/${notification.project_id}`);
                           }
                         }}
                       >
@@ -218,6 +337,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2">
                   <Avatar className="w-7 h-7">
+                    <AvatarImage src={profile?.avatar_url || ''} />
                     <AvatarFallback className="bg-primary/10 text-primary text-xs">
                       {getInitials(displayName)}
                     </AvatarFallback>

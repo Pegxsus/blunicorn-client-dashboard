@@ -7,13 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { User, Bell, Shield, Palette, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Settings = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
 
@@ -21,6 +21,7 @@ const Settings = () => {
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Password State
   const [currentPassword, setCurrentPassword] = useState('');
@@ -32,7 +33,7 @@ const Settings = () => {
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.display_name || '');
-      setEmail(profile.email || '');
+      setEmail(profile.email || user?.email || '');
     } else if (user) {
       setEmail(user.email || '');
     }
@@ -52,12 +53,20 @@ const Settings = () => {
 
     setIsUpdatingProfile(true);
     try {
+      const updates = {
+        user_id: user.id,
+        display_name: displayName,
+        email: user.email,
+        updated_at: new Date().toISOString(),
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .update({ display_name: displayName })
-        .eq('user_id', user.id);
+        .upsert(updates, { onConflict: 'user_id' });
 
       if (error) throw error;
+
+      await refreshProfile();
 
       toast({
         title: 'Success',
@@ -143,6 +152,64 @@ const Settings = () => {
     }
   };
 
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: 'Error',
+        description: 'File size must be less than 2MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}-${Math.random()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: user.id,
+          avatar_url: publicUrl,
+          email: user.email,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+
+      if (updateError) throw updateError;
+
+      await refreshProfile();
+
+      toast({
+        title: 'Success',
+        description: 'Profile photo updated successfully.',
+      });
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update profile photo',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="max-w-3xl space-y-8 animate-fade-in">
@@ -163,14 +230,31 @@ const Settings = () => {
 
           <div className="flex items-center gap-6">
             <Avatar className="w-20 h-20">
+              <AvatarImage src={profile?.avatar_url || ''} />
               <AvatarFallback className="bg-primary/10 text-primary text-2xl">
                 {getInitials(displayName || 'User')}
               </AvatarFallback>
             </Avatar>
             <div>
-              <Button variant="outline" size="sm">
-                Change Photo
-              </Button>
+              <div className="relative">
+                <input
+                  type="file"
+                  id="avatar-upload"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  disabled={isUploadingAvatar}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('avatar-upload')?.click()}
+                  disabled={isUploadingAvatar}
+                >
+                  {isUploadingAvatar && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Change Photo
+                </Button>
+              </div>
               <p className="text-sm text-muted-foreground mt-2">
                 JPG, PNG or GIF. Max 2MB.
               </p>

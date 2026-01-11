@@ -11,11 +11,12 @@ export const useClients = () => {
     return useQuery({
         queryKey: ['clients'],
         queryFn: async () => {
-            // First get user IDs that have the 'client' role
+            // First get user IDs that have the 'client' or 'admin' role
+            // This allows admins to create projects for themselves during testing
             const { data: roleData, error: roleError } = await supabase
                 .from('user_roles')
                 .select('user_id')
-                .eq('role', 'client');
+                .in('role', ['client', 'admin']);
 
             if (roleError) throw roleError;
 

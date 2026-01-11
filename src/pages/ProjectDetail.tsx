@@ -206,16 +206,9 @@ const ProjectDetail = () => {
 
           <TabsContent value="feedback" className="mt-0">
             <div className="glass-card p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-6">
-                Feedback & Revisions
-              </h3>
+
               <FeedbackSection
-                feedback={project.feedback}
                 revisionCount={project.revisionCount}
-                onSubmit={(message) => {
-                  console.log('New feedback:', message);
-                  // In production, this would update the project
-                }}
               />
             </div>
           </TabsContent>
