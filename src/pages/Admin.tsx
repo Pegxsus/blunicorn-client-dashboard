@@ -51,6 +51,7 @@ import { useClients } from '@/hooks/useClients';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { EditProjectDialog } from '@/components/admin/EditProjectDialog';
 
 const statusLabels: Record<ProjectStatus, string> = {
   discovery: 'Discovery',
@@ -74,6 +75,7 @@ const Admin = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
   // New Project State
@@ -399,6 +401,16 @@ const Admin = () => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          onClick={() => {
+                            setEditingProject(project);
+                            setEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           asChild
                         >
                           <a href={`/projects/${project.id}`}>
@@ -414,6 +426,18 @@ const Admin = () => {
           </Table>
         </div>
       </div>
+
+      {/* Edit Project Dialog */}
+      {editingProject && (
+        <EditProjectDialog
+          project={editingProject}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 };

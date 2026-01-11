@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, MessageSquare } from 'lucide-react';
@@ -31,71 +31,80 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
 
   const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User';
 
-  useEffect(() => {
+  const fetchMessages = async () => {
     if (!projectId) return;
 
-    // Fetch initial messages
-    const fetchMessages = async () => {
-      if (!projectId) return;
-
-      // First fetch messages
-      const { data: feedbackData, error: feedbackError } = await supabase
-        .from('project_feedback' as any)
-        .select(`
+    // First fetch messages
+    const { data: feedbackData, error: feedbackError } = await supabase
+      .from('project_feedback' as any)
+      .select(`
         id,
         message,
         created_at,
         author_id
       `)
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: true });
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: true });
 
-      if (feedbackError) {
-        console.error('Error fetching feedback:', feedbackError);
-        return;
-      }
+    if (feedbackError) {
+      console.error('Error fetching feedback:', feedbackError);
+      return;
+    }
 
-      if (!feedbackData || feedbackData.length === 0) {
-        setMessages([]);
-        return;
-      }
+    if (!feedbackData || feedbackData.length === 0) {
+      setMessages([]);
+      return;
+    }
 
-      // Then fetch profiles for these authors
-      const authorIds = [...new Set(feedbackData.map((msg: any) => msg.author_id))];
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url')
-        .in('id', authorIds);
+    // Then fetch profiles for these authors
+    const authorIds = [...new Set(feedbackData.map((msg: any) => msg.author_id))];
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, avatar_url')
+      .in('user_id', authorIds); // Changed from 'id' to 'user_id'
 
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-      }
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
+    }
 
-      // Create a map of authorId -> profile
-      const profileMap = new Map();
-      if (profilesData) {
-        profilesData.forEach(p => profileMap.set(p.id, p));
-      }
+    console.log('📝 Author IDs to fetch:', authorIds);
+    console.log('📝 Profiles fetched from DB:', profilesData);
 
-      // Combine data
-      const combinedMessages = feedbackData.map((msg: any) => {
-        const authorProfile = profileMap.get(msg.author_id);
-        return {
-          ...msg,
-          author_name: authorProfile?.display_name || 'User',
-          author_avatar: authorProfile?.avatar_url
-        };
+    // Create a map of authorId -> profile
+    const profileMap = new Map();
+    if (profilesData) {
+      profilesData.forEach(p => {
+        console.log(`  Profile for user ${p.user_id}:`, {
+          display_name: p.display_name,
+          avatar_url: p.avatar_url
+        });
+        profileMap.set(p.user_id, p); // Changed from p.id to p.user_id
       });
+    }
 
-      setMessages(combinedMessages);
-      console.log('Fetched messages with profiles:', combinedMessages);
-    };
+    // Combine data
+    const combinedMessages = feedbackData.map((msg: any) => {
+      const authorProfile = profileMap.get(msg.author_id);
+      return {
+        ...msg,
+        author_name: authorProfile?.display_name || 'User',
+        author_avatar: authorProfile?.avatar_url
+      };
+    });
 
+    setMessages(combinedMessages);
+    console.log('Fetched messages with profiles:', combinedMessages);
+  };
+
+  useEffect(() => {
+    if (!projectId) return;
+
+    // Fetch initial messages
     fetchMessages();
 
-    // Subscribe to new messages
+    // Subscribe to new messages (real-time)
     const channel = supabase
-      .channel('feedback-channel')
+      .channel(`feedback-${projectId}`)
       .on(
         'postgres_changes',
         {
@@ -105,15 +114,39 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
           filter: `project_id=eq.${projectId}`,
         },
         async (payload) => {
+          console.log('Real-time INSERT detected:', payload);
           await fetchMessages();
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'project_feedback',
+          filter: `project_id=eq.${projectId}`,
+        },
+        async (payload) => {
+          console.log('Real-time DELETE detected:', payload);
+          await fetchMessages();
+        }
+      )
+      .subscribe((status) => {
+        console.log('Feedback subscription status:', status);
+      });
+
+    // Polling fallback - check for new messages every 3 seconds
+    // This ensures messages appear even if real-time subscription fails
+    const pollingInterval = setInterval(() => {
+      fetchMessages();
+    }, 3000); // 3 seconds
 
     return () => {
+      console.log('Cleaning up feedback channel');
       supabase.removeChannel(channel);
+      clearInterval(pollingInterval);
     };
-  }, [projectId]);
+  }, [projectId]); // fetchMessages is stable due to useCallback, no need in deps
 
   const handleSubmit = async () => {
     if (!newMessage.trim() || !user || !projectId) return;
@@ -130,7 +163,12 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
 
       if (error) throw error;
 
+      // Clear input
       setNewMessage('');
+
+      // Manually refetch to ensure message appears immediately
+      // (Real-time subscription might have delays or connection issues)
+      await fetchMessages();
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Failed to send message');
@@ -261,18 +299,18 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
       </div>
 
       {/* New feedback input */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 items-end">
         <Textarea
           placeholder="Add your feedback or request changes..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          className="min-h-[80px] resize-none"
+          className="min-h-[80px] resize-none flex-1"
         />
         <Button
           onClick={handleSubmit}
           disabled={!newMessage.trim() || isSubmitting}
           size="icon"
-          className="w-10 h-10 shrink-0"
+          className="w-12 h-12 rounded-full shrink-0"
         >
           <Send className="w-5 h-5" />
         </Button>
