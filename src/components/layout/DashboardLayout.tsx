@@ -142,7 +142,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Projects', href: '/projects', icon: FolderOpen },
+    {
+      name: 'Projects',
+      href: '/projects',
+      icon: FolderOpen,
+      badge: unreadNotifications > 0 ? unreadNotifications : undefined
+    },
     ...(role === 'admin'
       ? [{ name: 'Admin', href: '/admin', icon: Shield }]
       : []),
@@ -207,7 +212,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   key={item.name}
                   to={item.href}
                   className={cn(
-                    'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
+                    'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors relative',
                     isActive
                       ? 'bg-muted text-foreground'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -215,7 +220,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   onClick={() => setSidebarOpen(false)}
                 >
                   <item.icon className="w-4 h-4" />
-                  {item.name}
+                  <span className="flex-1">{item.name}</span>
+                  {item.badge !== undefined && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

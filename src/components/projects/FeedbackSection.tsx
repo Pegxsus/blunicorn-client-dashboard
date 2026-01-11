@@ -8,6 +8,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface FeedbackSectionProps {
   revisionCount: number;
@@ -27,6 +38,7 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
   const [messages, setMessages] = useState<FeedbackItem[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { user, profile, role } = useAuth();
 
   const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User';
@@ -115,6 +127,10 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
         },
         async (payload) => {
           console.log('Real-time INSERT detected:', payload);
+          // Play sound for new messages from other users
+          if (payload.new && payload.new.author_id !== user?.id) {
+            playMessageSound();
+          }
           await fetchMessages();
         }
       )
@@ -180,8 +196,6 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
   const handleDeleteAll = async () => {
     if (!projectId || role !== 'admin') return;
 
-    if (!confirm('Are you sure you want to delete all conversation history? This cannot be undone.')) return;
-
     try {
       const { error } = await supabase
         .from('project_feedback' as any)
@@ -192,6 +206,7 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
 
       setMessages([]);
       toast.success('Conversation cleared');
+      setIsDeleteDialogOpen(false);
     } catch (error) {
       console.error('Error deleting feedback:', error);
       toast.error('Failed to clear conversation');
@@ -218,14 +233,34 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
         </h3>
 
         {role === 'admin' && messages.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDeleteAll}
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
-            Clear Conversation
-          </Button>
+          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                Clear Conversation
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete all conversation history for this project.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteAll}
+                  className="bg-destructive hover:bg-destructive/90"
+                >
+                  Delete Everything
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </div>
 

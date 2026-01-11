@@ -20,6 +20,8 @@ import {
 import { format } from 'date-fns';
 import { ProjectStatus } from '@/types';
 import { useProjects } from '@/hooks/useProjects';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const statusLabels: Record<ProjectStatus, string> = {
   discovery: 'Discovery',
@@ -34,8 +36,22 @@ const ProjectDetail = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: projects = [], isLoading } = useProjects();
+  const { data: unreadNotifications = [] } = useQuery({
+    queryKey: ['notifications', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from('notifications' as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('read', false);
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
   const project = projects.find((p) => p.id === id);
+  const projectUnreadCount = unreadNotifications.filter(n => n.project_id === id).length;
 
   if (!project) {
     return (
