@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 
 interface ProjectCardProps {
   project: Project;
+  unreadCount?: number;
 }
 
 const statusLabels: Record<ProjectStatus, string> = {
@@ -18,9 +19,14 @@ const statusLabels: Record<ProjectStatus, string> = {
   completed: 'Completed',
 };
 
-const ProjectCard = ({ project }: ProjectCardProps) => {
+const ProjectCard = ({ project, unreadCount = 0 }: ProjectCardProps) => {
   return (
-    <div className="glass-card glow-effect p-4 group">
+    <div className="glass-card glow-effect p-4 group relative">
+      {unreadCount > 0 && (
+        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground border-2 border-background z-10 shadow-lg">
+          {unreadCount}
+        </span>
+      )}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">

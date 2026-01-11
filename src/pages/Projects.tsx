@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Filter, FolderOpen } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Select,
   SelectContent,
@@ -29,6 +31,19 @@ const Projects = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'all'>('all');
   const { data: projects = [], isLoading } = useProjects();
+  const { data: unreadNotifications = [] } = useQuery({
+    queryKey: ['notifications', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from('notifications' as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('read', false);
+      return (data as any[]) || [];
+    },
+    enabled: !!user,
+  });
 
   const userProjects = role === 'admin'
     ? projects
@@ -93,7 +108,10 @@ const Projects = () => {
                 className="animate-slide-up"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <ProjectCard project={project} />
+                <ProjectCard
+                  project={project}
+                  unreadCount={unreadNotifications.filter(n => n.project_id === project.id).length}
+                />
               </div>
             ))}
           </div>

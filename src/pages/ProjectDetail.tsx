@@ -20,7 +20,7 @@ import {
 import { format } from 'date-fns';
 import { ProjectStatus } from '@/types';
 import { useProjects } from '@/hooks/useProjects';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 const statusLabels: Record<ProjectStatus, string> = {
@@ -35,6 +35,7 @@ const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: projects = [], isLoading } = useProjects();
   const { data: unreadNotifications = [] } = useQuery({
     queryKey: ['notifications', user?.id],
@@ -45,13 +46,33 @@ const ProjectDetail = () => {
         .select('*')
         .eq('user_id', user.id)
         .eq('read', false);
-      return data || [];
+      return (data as any[]) || [];
     },
     enabled: !!user,
   });
 
   const project = projects.find((p) => p.id === id);
   const projectUnreadCount = unreadNotifications.filter(n => n.project_id === id).length;
+
+  const handleTabChange = async (value: string) => {
+    if (value === 'feedback' && projectUnreadCount > 0) {
+      try {
+        const { error } = await supabase
+          .from('notifications' as any)
+          .update({ read: true })
+          .eq('user_id', user?.id)
+          .eq('project_id', id)
+          .eq('read', false);
+
+        if (error) throw error;
+
+        // Invalidate both local and global notification queries
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      } catch (err) {
+        console.error('Error marking notifications as read:', err);
+      }
+    }
+  };
 
   if (!project) {
     return (
@@ -173,7 +194,7 @@ const ProjectDetail = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="milestones" className="space-y-6">
+        <Tabs defaultValue="milestones" className="space-y-6" onValueChange={handleTabChange}>
           <TabsList className="bg-muted/50 p-1">
             <TabsTrigger value="milestones" className="gap-2">
               <Target className="w-4 h-4" />
@@ -188,9 +209,12 @@ const ProjectDetail = () => {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="feedback" className="gap-2">
+            <TabsTrigger value="feedback" className="gap-2 relative">
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Feedback</span>
+              {projectUnreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full animate-pulse border-2 border-background" />
+              )}
               {project.revisionCount > 0 && (
                 <Badge variant="outline" className="ml-1 text-[10px] px-1.5">
                   {project.revisionCount}
