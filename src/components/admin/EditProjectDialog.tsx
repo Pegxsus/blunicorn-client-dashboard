@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,8 +32,8 @@ interface EditProjectDialogProps {
 }
 
 export function EditProjectDialog({ project, open, onOpenChange, onSuccess }: EditProjectDialogProps) {
-    const [milestones, setMilestones] = useState<Milestone[]>(project.milestones);
-    const [deliverables, setDeliverables] = useState<Deliverable[]>(project.deliverables);
+    const [milestones, setMilestones] = useState<Milestone[]>([]);
+    const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
     const [isSaving, setIsSaving] = useState(false);
 
     // Milestone state
@@ -44,6 +44,22 @@ export function EditProjectDialog({ project, open, onOpenChange, onSuccess }: Ed
     const [newDeliverableName, setNewDeliverableName] = useState('');
     const [newDeliverableType, setNewDeliverableType] = useState<'workflow' | 'documentation' | 'guide' | 'video'>('workflow');
     const [newDeliverableUrl, setNewDeliverableUrl] = useState('');
+
+
+    // Reset state when dialog first opens (not when project changes during editing)
+    useEffect(() => {
+        if (open) {
+            console.log('Dialog opened - Initializing with project:', project);
+            console.log('Project milestones:', project.milestones);
+            console.log('Project deliverables:', project.deliverables);
+            setMilestones(project.milestones || []);
+            setDeliverables(project.deliverables || []);
+        } else {
+            // Reset when dialog closes
+            setMilestones([]);
+            setDeliverables([]);
+        }
+    }, [open]); // Only depend on 'open', not 'project'
 
     const handleAddMilestone = () => {
         if (!newMilestoneTitle.trim()) {
@@ -86,10 +102,15 @@ export function EditProjectDialog({ project, open, onOpenChange, onSuccess }: Ed
             name: newDeliverableName,
             type: newDeliverableType,
             url: newDeliverableUrl,
-            locked: true,
+            locked: false, // Changed to false so deliverables are immediately visible
         };
 
-        setDeliverables([...deliverables, newDeliverable]);
+        console.log('Adding deliverable:', newDeliverable);
+        console.log('Current deliverables:', deliverables);
+        const updatedDeliverables = [...deliverables, newDeliverable];
+        console.log('Updated deliverables:', updatedDeliverables);
+
+        setDeliverables(updatedDeliverables);
         setNewDeliverableName('');
         setNewDeliverableUrl('');
         toast.success('Deliverable added');
@@ -109,13 +130,19 @@ export function EditProjectDialog({ project, open, onOpenChange, onSuccess }: Ed
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            const { error } = await supabase
+            console.log('Saving milestones:', milestones);
+            console.log('Saving deliverables:', deliverables);
+
+            const { error, data } = await supabase
                 .from('projects')
                 .update({
                     milestones: milestones,
                     deliverables: deliverables,
                 })
-                .eq('id', project.id);
+                .eq('id', project.id)
+                .select();
+
+            console.log('Save response:', { error, data });
 
             if (error) throw error;
 

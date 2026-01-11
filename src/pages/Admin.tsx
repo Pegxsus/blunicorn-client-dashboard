@@ -26,6 +26,16 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Table,
   TableBody,
   TableCell,
@@ -42,7 +52,8 @@ import {
   CheckCircle2,
   Search,
   Users,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -76,6 +87,8 @@ const Admin = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string } | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   // New Project State
@@ -169,6 +182,32 @@ const Admin = () => {
       toast.success("Status and progress updated");
     } catch (error: any) {
       toast.error("Failed to update status");
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string, projectName: string) => {
+    setProjectToDelete({ id: projectId, name: projectName });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectToDelete.id);
+
+      if (error) throw error;
+
+      toast.success('Project deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      setDeleteDialogOpen(false);
+      setProjectToDelete(null);
+    } catch (error: any) {
+      console.error('Error deleting project:', error);
+      toast.error(error.message || 'Failed to delete project');
     }
   };
 
@@ -411,6 +450,14 @@ const Admin = () => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          onClick={() => handleDeleteProject(project.id, project.name)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           asChild
                         >
                           <a href={`/projects/${project.id}`}>
@@ -438,6 +485,40 @@ const Admin = () => {
           }}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Are you sure you want to permanently delete{' '}
+                <span className="font-semibold">{projectToDelete?.name}</span>?
+              </p>
+              <p className="text-sm">This will delete all:</p>
+              <ul className="text-sm list-disc list-inside space-y-1 ml-2">
+                <li>Milestones</li>
+                <li>Deliverables</li>
+                <li>Feedback messages</li>
+                <li>Associated notifications</li>
+              </ul>
+              <p className="text-sm font-semibold text-destructive">
+                This action cannot be undone.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteProject}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Delete Project
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
