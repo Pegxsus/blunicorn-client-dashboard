@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Project, Milestone, Deliverable, MilestoneStatus } from '@/types';
-import { Plus, Trash2, Check, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Check, Loader2, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -136,8 +136,8 @@ export function EditProjectDialog({ project, open, onOpenChange, onSuccess }: Ed
             const { error, data } = await supabase
                 .from('projects')
                 .update({
-                    milestones: milestones,
-                    deliverables: deliverables,
+                    milestones: milestones as any,
+                    deliverables: deliverables as any,
                 })
                 .eq('id', project.id)
                 .select();
@@ -304,11 +304,15 @@ export function EditProjectDialog({ project, open, onOpenChange, onSuccess }: Ed
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Button
-                                                variant="outline"
+                                                variant={deliverable.locked ? 'destructive' : 'outline'}
                                                 size="sm"
                                                 onClick={() => handleToggleDeliverableLock(deliverable.id)}
                                             >
-                                                {deliverable.locked ? 'Locked' : 'Unlocked'}
+                                                {deliverable.locked ? (
+                                                    <><Lock className="w-3 h-3 mr-1" /> Locked</>
+                                                ) : (
+                                                    'Unlocked'
+                                                )}
                                             </Button>
                                             <Button
                                                 variant="ghost"
