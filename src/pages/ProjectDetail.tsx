@@ -15,8 +15,10 @@ import {
   CheckCircle2,
   FileText,
   MessageSquare,
-  Target
+  Target,
+  Receipt
 } from 'lucide-react';
+import BillingSection from '@/components/projects/BillingSection';
 import { format } from 'date-fns';
 import { ProjectStatus } from '@/types';
 import { useProjects } from '@/hooks/useProjects';
@@ -209,6 +211,10 @@ const ProjectDetail = () => {
                 </Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="billing" className="gap-2">
+              <Receipt className="w-4 h-4" />
+              <span className="hidden sm:inline">Billing</span>
+            </TabsTrigger>
             <TabsTrigger value="feedback" className="gap-2 relative">
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Feedback</span>
@@ -241,6 +247,12 @@ const ProjectDetail = () => {
                 )}
               </div>
               <DeliverablesList deliverables={project.deliverables} projectReady={projectReady} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="billing" className="mt-0">
+            <div className="glass-card p-6">
+              <BillingSection />
             </div>
           </TabsContent>
 

@@ -29,22 +29,29 @@ const Usage = () => {
     useEffect(() => {
         const fetchMetrics = async () => {
             try {
-                const { count: clientCount } = await supabase
-                    .from('user_roles')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('role', 'client');
+                const { data, error } = await supabase.rpc('get_system_metrics' as any);
 
-                const { count: projectCount } = await supabase
-                    .from('projects')
-                    .select('*', { count: 'exact', head: true });
+                if (error) throw error;
 
-                setMetrics({
-                    clients: clientCount || 0,
-                    projects: projectCount || 0,
-                    storageUsed: (projectCount || 0) * 2.5 * 1024 * 1024
-                });
+                if (data) {
+                    // Cast to any because the RPC return type isn't automatically inferred yet
+                    const metricsData = data as any;
+                    setMetrics({
+                        clients: metricsData.clients || 0,
+                        projects: metricsData.projects || 0,
+                        storageUsed: metricsData.storage_bytes || 0
+                    });
+                }
             } catch (error) {
                 console.error('Error fetching metrics', error);
+
+                // Fallback for dev/demo if RPC missing
+                // (Optional: remove this block if we are strict, but good for stability)
+                try {
+                    const { count: c } = await supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'client');
+                    const { count: p } = await supabase.from('projects').select('*', { count: 'exact', head: true });
+                    setMetrics({ clients: c || 0, projects: p || 0, storageUsed: 0 });
+                } catch (err) { /* ignore */ }
             } finally {
                 setLoading(false);
             }
@@ -127,7 +134,7 @@ const Usage = () => {
                         <CardContent>
                             <div className="text-2xl font-bold">{formatBytes(metrics.storageUsed)}</div>
                             <p className="text-xs text-muted-foreground">
-                                Estimated usage
+                                Actual usage
                             </p>
                             <div className="mt-4 space-y-2">
                                 <div className="flex justify-between text-xs">

@@ -43,6 +43,15 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
 
   const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User';
 
+  const playMessageSound = () => {
+    try {
+      const audio = new Audio('/notification.mp3');
+      audio.play().catch(e => console.log('Audio play failed', e));
+    } catch (e) {
+      console.error('Audio setup failed', e);
+    }
+  };
+
   const fetchMessages = async () => {
     if (!projectId) return;
 
@@ -291,6 +300,7 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
               className={`flex gap-3 ${isCurrentUser ? 'flex-row-reverse' : ''}`}
             >
               <Avatar className="w-8 h-8 shrink-0">
+                <AvatarImage src={item.author_avatar} alt={authorLabel} />
                 <AvatarFallback
                   className={`text-xs ${isCurrentUser
                     ? 'bg-primary/10 text-primary'
@@ -309,7 +319,28 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
                     : 'bg-muted rounded-tl-none'
                     }`}
                 >
-                  <p className="text-sm">{item.message}</p>
+                  <p className="text-sm whitespace-pre-wrap">
+                    {(() => {
+                      const urlRegex = /(https?:\/\/[^\s]+)/g;
+                      const parts = item.message.split(urlRegex);
+                      return parts.map((part, i) => {
+                        if (part.match(urlRegex)) {
+                          return (
+                            <a
+                              key={i}
+                              href={part}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-green-500 underline hover:no-underline break-all"
+                            >
+                              {part}
+                            </a>
+                          );
+                        }
+                        return part;
+                      });
+                    })()}
+                  </p>
                 </div>
                 <div
                   className={`flex items-center gap-2 mt-1 text-xs text-muted-foreground ${isCurrentUser ? 'justify-end' : ''
