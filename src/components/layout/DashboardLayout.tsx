@@ -13,6 +13,7 @@ import {
   X,
   ChevronDown,
   Shield,
+  Database,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import {
@@ -24,6 +25,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
+// import UsageMetrics from '@/components/admin/UsageMetrics'; // REMOVED
 // import { mockNotifications } from '@/lib/mock-data'; // Removed mock data usage
 
 interface DashboardLayoutProps {
@@ -149,7 +151,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       badge: unreadNotifications > 0 ? unreadNotifications : undefined
     },
     ...(role === 'admin'
-      ? [{ name: 'Admin', href: '/admin', icon: Shield }]
+      ? [
+        { name: 'Admin', href: '/admin', icon: Shield },
+        { name: 'Usage & Metrics', href: '/usage', icon: Database }
+      ]
       : []),
     { name: 'Settings', href: '/settings', icon: Settings },
   ];

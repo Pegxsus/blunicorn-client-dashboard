@@ -89,8 +89,8 @@ const Login = () => {
 
       {/* Top Bar - Back to Home */}
       <div className="p-6 opacity-0 animate-fade-in">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-all duration-300 group"
         >
           <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
@@ -102,14 +102,14 @@ const Login = () => {
       <div className="flex-1 flex items-center justify-center p-6 -mt-16">
         <div className="w-full max-w-md">
           <div className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-8 space-y-8 opacity-0 animate-blur-in shadow-2xl shadow-primary/5">
-            
+
             {/* Logo & Header */}
             <div className="text-center space-y-4">
               <div className="flex items-center justify-center gap-3 opacity-0 animate-bounce-in delay-100">
-                <img 
-                  src={logo} 
-                  alt="Blunicorn" 
-                  className="w-10 h-10 object-contain rounded-lg transition-transform duration-300 hover:scale-110" 
+                <img
+                  src={logo}
+                  alt="Blunicorn"
+                  className="w-10 h-10 object-contain rounded-lg transition-transform duration-300 hover:scale-110"
                 />
                 <span className="text-xl font-semibold text-foreground">Blunicorn</span>
               </div>
@@ -118,8 +118,8 @@ const Login = () => {
                   {isSignUp ? 'Create an account' : 'Welcome back'}
                 </h1>
                 <p className="text-muted-foreground">
-                  {isSignUp 
-                    ? 'Enter your details to get started' 
+                  {isSignUp
+                    ? 'Enter your details to get started'
                     : 'Enter your credentials to access your account'}
                 </p>
               </div>
@@ -186,8 +186,8 @@ const Login = () => {
 
               {!isSignUp && (
                 <div className="flex justify-end opacity-0 animate-fade-in delay-500">
-                  <a 
-                    href="#" 
+                  <a
+                    href="#"
                     className="text-sm text-primary hover:text-primary/80 transition-colors duration-300"
                   >
                     Forgot password?
@@ -264,22 +264,10 @@ const Login = () => {
             </form>
 
             {/* Toggle Sign Up / Sign In */}
-            <div className="text-center opacity-0 animate-fade-in delay-700">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  setError('');
-                }}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-300"
-              >
-                {isSignUp ? (
-                  <>Already have an account? <span className="text-primary font-medium hover:underline">Sign in</span></>
-                ) : (
-                  <>Don't have an account? <span className="text-primary font-medium hover:underline">Sign up</span></>
-                )}
-              </button>
-            </div>
+            {/* Toggle Sign Up / Sign In - REMOVED for Invite Only System */}
+            {/* <div className="text-center opacity-0 animate-fade-in delay-700">
+              <button ... > ... </button>
+            </div> */}
 
           </div>
         </div>
