@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +33,9 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, CreditCard, Receipt, Loader2, CheckCircle2, Trash2 } from 'lucide-react';
+import { Plus, CreditCard, Receipt, Loader2, CheckCircle2, Trash2, Eye, Info, Calendar, Hash, RefreshCw } from 'lucide-react';
+
+
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -66,7 +70,11 @@ const BillingSection = () => {
     const [isCreating, setIsCreating] = useState(false);
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null);
+    const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
     const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+
 
     // Form State
     const [newTitle, setNewTitle] = useState('');
@@ -74,8 +82,14 @@ const BillingSection = () => {
     const [newCurrency, setNewCurrency] = useState('USD');
     const [newDueDate, setNewDueDate] = useState('');
 
-    const fetchInvoices = async () => {
+    const fetchInvoices = async (showToast = false) => {
+        if (!projectId) {
+            console.error('No project ID found in params');
+            return;
+        }
+
         try {
+            if (showToast) setIsRefreshing(true);
             const { data, error } = await supabase
                 .from('invoices' as any)
                 .select('*')
@@ -83,14 +97,18 @@ const BillingSection = () => {
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
+            console.log(`Fetched ${data?.length || 0} invoices for project ${projectId}:`, data);
             setInvoices((data as any) || []);
+            if (showToast) toast.success('Invoices updated');
         } catch (error) {
             console.error('Error fetching invoices:', error);
-            // toast.error('Failed to load invoices');
+            if (showToast) toast.error('Failed to update invoices');
         } finally {
             setLoading(false);
+            setIsRefreshing(false);
         }
     };
+
 
     // Load Razorpay Checkout script
     useEffect(() => {
@@ -180,15 +198,39 @@ const BillingSection = () => {
                 currency: data.currency,
                 name: 'Blunicorn',
                 description: invoice.title,
-                handler: (response: any) => {
-                    // Payment initiated successfully
-                    toast.success('Payment initiated! Confirming...');
-                    // Refresh invoice status after a delay (webhook will update it)
-                    setTimeout(() => {
+                handler: async (response: any) => {
+                    console.log('Razorpay payment response:', response);
+                    toast.loading('Verifying payment...', { id: 'payment-verification' });
+
+                    try {
+                        const { data, error } = await supabase.functions.invoke('verify-razorpay-payment', {
+                            body: {
+                                order_id: response.razorpay_order_id,
+                                payment_id: response.razorpay_payment_id,
+                                signature: response.razorpay_signature
+                            }
+                        });
+
+                        if (error) throw error;
+
+                        toast.dismiss('payment-verification');
+                        toast.success('Payment verified successfully!');
+
+                        // Immediate refresh since we know it's updated
                         fetchInvoices();
                         setPayingInvoiceId(null);
-                    }, 3000);
+
+                    } catch (error: any) {
+                        console.error('Verification error:', error);
+                        toast.dismiss('payment-verification');
+                        toast.error('Payment verified but status update failed. Please contact support.');
+
+                        // Fallback to polling just in case webhook worked
+                        fetchInvoices();
+                        setPayingInvoiceId(null);
+                    }
                 },
+
                 modal: {
                     ondismiss: () => {
                         toast.info('Payment cancelled');
@@ -214,16 +256,21 @@ const BillingSection = () => {
         try {
             const { error } = await supabase
                 .from('invoices' as any)
-                .update({ status: 'paid' })
+                .update({
+                    status: 'paid',
+                    paid_at: new Date().toISOString()
+                })
                 .eq('id', invoiceId);
 
             if (error) throw error;
-            toast.success('Marked as paid');
+            toast.success('Invoice marked as paid');
             fetchInvoices();
         } catch (error) {
-            toast.error('Update failed');
+            console.error('Update error:', error);
+            toast.error('Failed to update status');
         }
     };
+
 
     const handleDeleteInvoice = (invoiceId: string) => {
         setDeleteId(invoiceId);
@@ -255,8 +302,20 @@ const BillingSection = () => {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground">Invoices & Payments</h3>
+                <div className="flex items-center gap-4">
+                    <h3 className="text-lg font-semibold text-foreground">Invoices & Payments</h3>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => fetchInvoices(true)}
+                        disabled={isRefreshing || loading}
+                    >
+                        <RefreshCw className={cn("w-4 h-4", (isRefreshing || loading) && "animate-spin")} />
+                    </Button>
+                </div>
                 {role === 'admin' && (
+
                     <Dialog open={createOpen} onOpenChange={setCreateOpen}>
                         <DialogTrigger asChild>
                             <Button size="sm">
@@ -339,13 +398,18 @@ const BillingSection = () => {
                                             {invoice.title}
                                         </CardTitle>
                                         <div className="flex gap-2">
-                                            <Badge variant={invoice.status === 'paid' ? 'secondary' : 'default'} className={
-                                                invoice.status === 'paid' ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' :
-                                                    invoice.status === 'overdue' ? 'destructive' : 'default'
-                                            }>
-                                                {invoice.status}
+                                            <Badge variant="outline" className={cn(
+                                                "capitalize font-semibold border-2",
+                                                invoice.status === 'paid' && "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20",
+                                                invoice.status === 'pending' && "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20",
+                                                invoice.status === 'overdue' && "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20",
+                                                invoice.status === 'cancelled' && "bg-slate-500/10 text-slate-500 border-slate-500/20 hover:bg-slate-500/20",
+                                                (!invoice.status || invoice.status === 'draft') && "bg-blue-500/10 text-blue-500 border-blue-500/20 hover:bg-blue-500/20"
+                                            )}>
+                                                {invoice.status || 'draft'}
                                             </Badge>
                                             {role === 'admin' && (
+
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
@@ -401,6 +465,18 @@ const BillingSection = () => {
                                             </Button>
                                         )}
 
+                                        {invoice.status === 'paid' && (
+                                            <Button
+                                                variant="outline"
+                                                className="w-full border-green-500/20 hover:border-green-500/50 hover:bg-green-500/5 group"
+                                                onClick={() => setSelectedInvoice(invoice)}
+                                            >
+                                                <Eye className="w-4 h-4 mr-2 text-green-500 group-hover:scale-110 transition-transform" />
+                                                View Payment
+                                            </Button>
+                                        )}
+
+
                                         {role === 'admin' && invoice.status !== 'paid' && (
                                             <Button
                                                 variant="outline"
@@ -436,6 +512,76 @@ const BillingSection = () => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <Dialog open={!!selectedInvoice} onOpenChange={(open) => !open && setSelectedInvoice(null)}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Info className="w-5 h-5 text-indigo-500" />
+                            Payment Details
+                        </DialogTitle>
+                    </DialogHeader>
+                    {selectedInvoice && (
+                        <div className="space-y-6 py-4">
+                            <div className="text-center p-6 bg-green-500/5 rounded-xl border border-green-500/10">
+                                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg shadow-green-500/20">
+                                    <CheckCircle2 className="w-7 h-7 text-white" />
+                                </div>
+                                <h4 className="text-xl font-bold text-foreground">Payment Successful</h4>
+                                <p className="text-sm text-muted-foreground mt-1">{selectedInvoice.title}</p>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center py-2 border-b border-white/5">
+                                    <span className="text-sm text-muted-foreground flex items-center gap-2">
+                                        <CreditCard className="w-4 h-4" /> Amount Paid
+                                    </span>
+                                    <span className="font-semibold text-lg">
+                                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: selectedInvoice.currency || 'USD' }).format(selectedInvoice.amount)}
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-between items-center py-2 border-b border-white/5">
+                                    <span className="text-sm text-muted-foreground flex items-center gap-2">
+                                        <Calendar className="w-4 h-4" /> Paid On
+                                    </span>
+                                    <span className="text-sm font-medium">
+                                        {selectedInvoice.paid_at && format(new Date(selectedInvoice.paid_at), 'MMM d, yyyy HH:mm')}
+                                    </span>
+                                </div>
+
+                                {selectedInvoice.razorpay_payment_id && (
+                                    <div className="space-y-1 py-2 border-b border-white/5">
+                                        <span className="text-xs text-muted-foreground flex items-center gap-2 mb-1">
+                                            <Hash className="w-3 h-3" /> Razorpay Payment ID
+                                        </span>
+                                        <code className="text-[10px] bg-muted px-2 py-1 rounded block truncate font-mono">
+                                            {selectedInvoice.razorpay_payment_id}
+                                        </code>
+                                    </div>
+                                )}
+
+                                {selectedInvoice.razorpay_order_id && (
+                                    <div className="space-y-1 py-2">
+                                        <span className="text-xs text-muted-foreground flex items-center gap-2 mb-1">
+                                            <Hash className="w-3 h-3" /> Razorpay Order ID
+                                        </span>
+                                        <code className="text-[10px] bg-muted px-2 py-1 rounded block truncate font-mono">
+                                            {selectedInvoice.razorpay_order_id}
+                                        </code>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button className="w-full" onClick={() => setSelectedInvoice(null)}>
+                            Close
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
         </div >
     );
 };
