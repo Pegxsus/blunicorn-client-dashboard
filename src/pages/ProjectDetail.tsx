@@ -1,4 +1,5 @@
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import MilestoneTimeline from '@/components/projects/MilestoneTimeline';
@@ -37,7 +38,9 @@ const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = React.useState('milestones');
   const { data: projects = [], isLoading } = useProjects();
   const { data: unreadNotifications = [] } = useQuery({
     queryKey: ['notifications', user?.id],
@@ -56,7 +59,18 @@ const ProjectDetail = () => {
   const project = projects.find((p) => p.id === id);
   const projectUnreadCount = unreadNotifications.filter(n => n.project_id === id).length;
 
+  // Check if we should open a specific tab based on navigation state
+  React.useEffect(() => {
+    const state = location.state as { openTab?: string } | null;
+    if (state?.openTab) {
+      setActiveTab(state.openTab);
+      // Clear the state so it doesn't persist on refresh
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, navigate]);
+
   const handleTabChange = async (value: string) => {
+    setActiveTab(value);
     if (value === 'feedback' && projectUnreadCount > 0) {
       try {
         const { error } = await supabase
@@ -196,7 +210,7 @@ const ProjectDetail = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="milestones" className="space-y-6" onValueChange={handleTabChange}>
+        <Tabs value={activeTab} className="space-y-6" onValueChange={handleTabChange}>
           <TabsList className="bg-muted/50 p-1">
             <TabsTrigger value="milestones" className="gap-2">
               <Target className="w-4 h-4" />

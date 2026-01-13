@@ -45,6 +45,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
   Plus,
   Edit,
   Upload,
@@ -56,7 +61,8 @@ import {
   Loader2,
   Trash2,
   UserPlus,
-  Key
+  Key,
+  Info
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -412,6 +418,28 @@ const Admin = () => {
                             <p className="text-xs text-muted-foreground truncate">{client.email}</p>
                           </div>
                           <div className="flex items-center gap-1">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="View Info"
+                                >
+                                  <Info className="w-4 h-4 text-muted-foreground" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-4">
+                                <div className="space-y-2">
+                                  <h4 className="font-medium leading-none">Client Info</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    <span className="font-semibold">Last Online:</span>{' '}
+                                    {client.lastSignInAt
+                                      ? format(new Date(client.lastSignInAt), 'MMM d, yyyy h:mm a')
+                                      : 'Never'}
+                                  </p>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
                             <Button
                               variant="ghost"
                               size="icon"

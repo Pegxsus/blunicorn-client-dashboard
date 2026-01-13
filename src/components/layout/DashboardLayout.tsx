@@ -319,16 +319,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                             // Navigate to feedback tab if it's a feedback notification
                             const isFeedbackNotification = notification.title?.toLowerCase().includes('feedback');
                             const route = `/projects/${notification.project_id}`;
-                            navigate(route);
 
-                            // After navigation, switch to feedback tab if needed
-                            if (isFeedbackNotification) {
-                              // Small delay to ensure the page loads first
-                              setTimeout(() => {
-                                const feedbackTab = document.querySelector('[value="feedback"]') as HTMLElement;
-                                feedbackTab?.click();
-                              }, 100);
-                            }
+                            // Pass state to tell ProjectDetail which tab to open
+                            navigate(route, {
+                              state: isFeedbackNotification ? { openTab: 'feedback' } : undefined
+                            });
                           }
                         }}
                       >
