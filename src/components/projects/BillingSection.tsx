@@ -31,7 +31,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, CreditCard, ExternalLink, Receipt, Loader2, CheckCircle2, Trash2 } from 'lucide-react';
+import { Plus, CreditCard, Receipt, Loader2, CheckCircle2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -40,8 +40,10 @@ interface Invoice {
     title: string;
     amount: number;
     currency: string;
-    status: 'pending' | 'paid' | 'overdue' | 'cancelled';
-    payment_link?: string;
+    status: 'draft' | 'pending' | 'paid' | 'overdue' | 'cancelled';
+    razorpay_order_id?: string;
+    razorpay_payment_id?: string;
+    paid_at?: string;
     due_date?: string;
     created_at: string;
 }
@@ -63,13 +65,14 @@ const BillingSection = () => {
     const [createOpen, setCreateOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null);
+    const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
     // Form State
     const [newTitle, setNewTitle] = useState('');
     const [newAmount, setNewAmount] = useState('');
     const [newCurrency, setNewCurrency] = useState('USD');
     const [newDueDate, setNewDueDate] = useState('');
-    const [newLink, setNewLink] = useState('');
 
     const fetchInvoices = async () => {
         try {
@@ -88,6 +91,23 @@ const BillingSection = () => {
             setLoading(false);
         }
     };
+
+    // Load Razorpay Checkout script
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        script.onload = () => setRazorpayLoaded(true);
+        script.onerror = () => {
+            console.error('Failed to load Razorpay SDK');
+            toast.error('Payment gateway failed to load');
+        };
+        document.body.appendChild(script);
+
+        return () => {
+            document.body.removeChild(script);
+        };
+    }, []);
 
     useEffect(() => {
         if (projectId) {
@@ -111,7 +131,6 @@ const BillingSection = () => {
                     amount: parseFloat(newAmount),
                     currency: newCurrency,
                     due_date: newDueDate ? new Date(newDueDate).toISOString() : null,
-                    payment_link: newLink,
                     status: 'pending'
                 });
 
@@ -123,12 +142,71 @@ const BillingSection = () => {
             setNewAmount('');
             setNewCurrency('USD');
             setNewDueDate('');
-            setNewLink('');
             fetchInvoices();
         } catch (error: any) {
             toast.error(error.message || 'Failed to create invoice');
         } finally {
             setIsCreating(false);
+        }
+    };
+
+    const handlePayNow = async (invoice: Invoice) => {
+        if (!razorpayLoaded) {
+            toast.error('Payment gateway is still loading. Please try again.');
+            return;
+        }
+
+        const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+        if (!razorpayKeyId) {
+            toast.error('Payment gateway not configured');
+            return;
+        }
+
+        setPayingInvoiceId(invoice.id);
+
+        try {
+            // Call Edge Function to create Razorpay order
+            const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
+                body: { invoice_id: invoice.id }
+            });
+
+            if (error) throw error;
+
+            // Launch Razorpay Checkout
+            const options = {
+                key: razorpayKeyId,
+                order_id: data.order_id,
+                amount: data.amount,
+                currency: data.currency,
+                name: 'Blunicorn',
+                description: invoice.title,
+                handler: (response: any) => {
+                    // Payment initiated successfully
+                    toast.success('Payment initiated! Confirming...');
+                    // Refresh invoice status after a delay (webhook will update it)
+                    setTimeout(() => {
+                        fetchInvoices();
+                        setPayingInvoiceId(null);
+                    }, 3000);
+                },
+                modal: {
+                    ondismiss: () => {
+                        toast.info('Payment cancelled');
+                        setPayingInvoiceId(null);
+                    }
+                },
+                theme: {
+                    color: '#6366f1'
+                }
+            };
+
+            const razorpay = new window.Razorpay(options);
+            razorpay.open();
+
+        } catch (error: any) {
+            console.error('Payment error:', error);
+            toast.error(error.message || 'Failed to initiate payment');
+            setPayingInvoiceId(null);
         }
     };
 
@@ -232,17 +310,6 @@ const BillingSection = () => {
                                         onChange={(e) => setNewDueDate(e.target.value)}
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label>Payment Link (Razorpay/Stripe)</Label>
-                                    <Input
-                                        placeholder="https://..."
-                                        value={newLink}
-                                        onChange={(e) => setNewLink(e.target.value)}
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Paste a payment link generated from your payment gateway dashboard.
-                                    </p>
-                                </div>
                             </div>
                             <DialogFooter>
                                 <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
@@ -256,83 +323,102 @@ const BillingSection = () => {
                 )}
             </div>
 
-            {invoices.length === 0 ? (
-                <div className="text-center py-12 border rounded-lg border-dashed">
-                    <Receipt className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
-                    <p className="text-muted-foreground">No invoices generated yet.</p>
-                </div>
-            ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {invoices.map((invoice) => (
-                        <Card key={invoice.id} className="glass-card">
-                            <CardHeader className="pb-3">
-                                <div className="flex justify-between items-start">
-                                    <CardTitle className="text-base font-medium leading-none">
-                                        {invoice.title}
-                                    </CardTitle>
-                                    <div className="flex gap-2">
-                                        <Badge variant={invoice.status === 'paid' ? 'secondary' : 'default'} className={
-                                            invoice.status === 'paid' ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' :
-                                                invoice.status === 'overdue' ? 'destructive' : 'default'
-                                        }>
-                                            {invoice.status}
-                                        </Badge>
-                                        {role === 'admin' && (
+            {
+                invoices.length === 0 ? (
+                    <div className="text-center py-12 border rounded-lg border-dashed">
+                        <Receipt className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                        <p className="text-muted-foreground">No invoices generated yet.</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {invoices.map((invoice) => (
+                            <Card key={invoice.id} className="glass-card">
+                                <CardHeader className="pb-3">
+                                    <div className="flex justify-between items-start">
+                                        <CardTitle className="text-base font-medium leading-none">
+                                            {invoice.title}
+                                        </CardTitle>
+                                        <div className="flex gap-2">
+                                            <Badge variant={invoice.status === 'paid' ? 'secondary' : 'default'} className={
+                                                invoice.status === 'paid' ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' :
+                                                    invoice.status === 'overdue' ? 'destructive' : 'default'
+                                            }>
+                                                {invoice.status}
+                                            </Badge>
+                                            {role === 'admin' && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-5 w-5 text-muted-foreground hover:text-destructive"
+                                                    onClick={() => handleDeleteInvoice(invoice.id)}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <CardDescription className="text-xs">
+                                        {invoice.created_at && format(new Date(invoice.created_at), 'MMM d, yyyy')}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold mb-4">
+                                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency || 'USD' }).format(invoice.amount)}
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {invoice.due_date && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Due Date</span>
+                                                <span>{format(new Date(invoice.due_date), 'MMM d, yyyy')}</span>
+                                            </div>
+                                        )}
+
+                                        {invoice.paid_at && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Paid On</span>
+                                                <span className="text-green-600">{format(new Date(invoice.paid_at), 'MMM d, yyyy')}</span>
+                                            </div>
+                                        )}
+
+                                        {invoice.status === 'pending' && (
                                             <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-5 w-5 text-muted-foreground hover:text-destructive"
-                                                onClick={() => handleDeleteInvoice(invoice.id)}
+                                                className="w-full"
+                                                onClick={() => handlePayNow(invoice)}
+                                                disabled={payingInvoiceId === invoice.id}
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                {payingInvoiceId === invoice.id ? (
+                                                    <>
+                                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                        Processing...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <CreditCard className="w-4 h-4 mr-2" />
+                                                        Pay Now
+                                                    </>
+                                                )}
+                                            </Button>
+                                        )}
+
+                                        {role === 'admin' && invoice.status !== 'paid' && (
+                                            <Button
+                                                variant="outline"
+                                                className="w-full"
+                                                size="sm"
+                                                onClick={() => handleMarkAsPaid(invoice.id)}
+                                            >
+                                                <CheckCircle2 className="w-4 h-4 mr-2" />
+                                                Mark as Paid
                                             </Button>
                                         )}
                                     </div>
-                                </div>
-                                <CardDescription className="text-xs">
-                                    {invoice.created_at && format(new Date(invoice.created_at), 'MMM d, yyyy')}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold mb-4">
-                                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency || 'USD' }).format(invoice.amount)}
-                                </div>
-
-                                <div className="space-y-3">
-                                    {invoice.due_date && (
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Due Date</span>
-                                            <span>{format(new Date(invoice.due_date), 'MMM d, yyyy')}</span>
-                                        </div>
-                                    )}
-
-                                    {invoice.status !== 'paid' && invoice.payment_link && (
-                                        <Button className="w-full" asChild>
-                                            <a href={invoice.payment_link} target="_blank" rel="noopener noreferrer">
-                                                <CreditCard className="w-4 h-4 mr-2" />
-                                                Pay Now
-                                                <ExternalLink className="w-3 h-3 ml-2 opacity-50" />
-                                            </a>
-                                        </Button>
-                                    )}
-
-                                    {role === 'admin' && invoice.status !== 'paid' && (
-                                        <Button
-                                            variant="outline"
-                                            className="w-full"
-                                            size="sm"
-                                            onClick={() => handleMarkAsPaid(invoice.id)}
-                                        >
-                                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                                            Mark as Paid
-                                        </Button>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            )}
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )
+            }
 
             <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
                 <AlertDialogContent>
@@ -350,7 +436,7 @@ const BillingSection = () => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </div>
+        </div >
     );
 };
 
