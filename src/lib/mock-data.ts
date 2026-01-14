@@ -10,7 +10,7 @@ export const mockUsers: User[] = [
   },
   {
     id: '2',
-    email: 'admin@blunicorn.org',
+    email: 'admin@blukaze.org',
     name: 'Sarah Chen',
     role: 'admin',
     avatar: undefined,

@@ -193,8 +193,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           {/* Logo */}
           <div className="flex h-14 items-center justify-between px-4 border-b border-sidebar-border">
             <Link to="/dashboard" className="flex items-center gap-2.5">
-              <img src={logo} alt="Blunicorn" className="w-8 h-8 object-contain rounded-lg" />
-              <span className="text-sm font-semibold text-foreground">Blunicorn</span>
+              <img src={logo} alt="Blukaze" className="w-8 h-8 object-contain rounded-lg" />
+              <span className="text-sm font-semibold text-foreground">Blukaze</span>
             </Link>
             <Button
               variant="ghost"

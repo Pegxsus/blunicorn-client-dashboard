@@ -31,7 +31,7 @@ Set the following secrets using Supabase CLI:
 
 ```bash
 # Navigate to your project directory
-cd c:\Users\Dell\blunicorn-client-dashboard
+cd c:\Users\Dell\blukaze-client-dashboard
 
 # Set Razorpay Key Secret
 supabase secrets set RAZORPAY_KEY_SECRET=YOUR_SECRET_KEY_HERE

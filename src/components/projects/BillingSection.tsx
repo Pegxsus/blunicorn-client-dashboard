@@ -196,7 +196,7 @@ const BillingSection = () => {
                 order_id: data.order_id,
                 amount: data.amount,
                 currency: data.currency,
-                name: 'Blunicorn',
+                name: 'Blukaze',
                 description: invoice.title,
                 handler: async (response: any) => {
                     console.log('Razorpay payment response:', response);

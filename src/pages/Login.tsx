@@ -108,10 +108,10 @@ const Login = () => {
               <div className="flex items-center justify-center gap-3 opacity-0 animate-bounce-in delay-100">
                 <img
                   src={logo}
-                  alt="Blunicorn"
+                  alt="Blukaze"
                   className="w-10 h-10 object-contain rounded-lg transition-transform duration-300 hover:scale-110"
                 />
-                <span className="text-xl font-semibold text-foreground">Blunicorn</span>
+                <span className="text-xl font-semibold text-foreground">Blukaze</span>
               </div>
               <div className="opacity-0 animate-slide-up delay-200 space-y-2">
                 <h1 className="text-2xl font-bold text-foreground">
