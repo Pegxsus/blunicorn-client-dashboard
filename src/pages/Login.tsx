@@ -184,16 +184,7 @@ const Login = () => {
                 </div>
               </div>
 
-              {!isSignUp && (
-                <div className="flex justify-end opacity-0 animate-fade-in delay-500">
-                  <a
-                    href="#"
-                    className="text-sm text-primary hover:text-primary/80 transition-colors duration-300"
-                  >
-                    Forgot password?
-                  </a>
-                </div>
-              )}
+
 
               {error && (
                 <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center animate-scale-in">
