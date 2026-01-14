@@ -89,13 +89,13 @@ const Login = () => {
 
       {/* Top Bar - Back to Home */}
       <div className="p-6 opacity-0 animate-fade-in">
-        <Link
-          to="/"
+        <a
+          href="https://blukaze.com"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-all duration-300 group"
         >
           <ArrowLeft className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" />
           Back to Home
-        </Link>
+        </a>
       </div>
 
       {/* Centered Auth Card */}
