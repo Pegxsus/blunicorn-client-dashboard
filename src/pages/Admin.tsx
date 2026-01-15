@@ -72,6 +72,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { EditProjectDialog } from '@/components/admin/EditProjectDialog';
+import { ClientLocation } from '@/components/admin/ClientLocation';
 
 const statusLabels: Record<ProjectStatus, string> = {
   discovery: 'Discovery',
@@ -437,6 +438,17 @@ const Admin = () => {
                                       ? format(new Date(client.lastSignInAt), 'MMM d, yyyy h:mm a')
                                       : 'Never'}
                                   </p>
+                                  <div className="pt-2 border-t border-border/50 mt-2">
+                                    <p className="text-sm text-muted-foreground">
+                                      <span className="font-semibold">IP Address:</span>{' '}
+                                      {client.lastSignInIp || 'Not recorded'}
+                                    </p>
+                                    {client.lastSignInIp && (
+                                      <div className="pt-1">
+                                        <ClientLocation ip={client.lastSignInIp} />
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </PopoverContent>
                             </Popover>

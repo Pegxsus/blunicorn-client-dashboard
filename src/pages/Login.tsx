@@ -105,23 +105,13 @@ const Login = () => {
 
             {/* Logo & Header */}
             <div className="text-center space-y-4">
-              <div className="flex items-center justify-center gap-3 opacity-0 animate-bounce-in delay-100">
+              <div className="flex flex-col items-center justify-center gap-6 opacity-0 animate-bounce-in delay-100">
                 <img
                   src={logo}
                   alt="Blukaze"
-                  className="w-10 h-10 object-contain rounded-lg transition-transform duration-300 hover:scale-110"
+                  className="w-20 h-20 object-contain rounded-xl shadow-lg shadow-primary/10 transition-transform duration-300 hover:scale-105"
                 />
-                <span className="text-xl font-semibold text-foreground">Blukaze</span>
-              </div>
-              <div className="opacity-0 animate-slide-up delay-200 space-y-2">
-                <h1 className="text-2xl font-bold text-foreground">
-                  {isSignUp ? 'Create an account' : 'Welcome back'}
-                </h1>
-                <p className="text-muted-foreground">
-                  {isSignUp
-                    ? 'Enter your details to get started'
-                    : 'Enter your credentials to access your account'}
-                </p>
+                <span className="text-3xl font-bold text-foreground tracking-tight">Blukaze</span>
               </div>
             </div>
 

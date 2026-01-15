@@ -6,6 +6,7 @@ export interface Client {
     email: string;
     displayName: string;
     lastSignInAt: string | null;
+    lastSignInIp: string | null;
 }
 
 export const useClients = () => {
@@ -20,7 +21,8 @@ export const useClients = () => {
                 id: c.id,
                 email: c.email,
                 displayName: c.display_name,
-                lastSignInAt: c.last_sign_in_at
+                lastSignInAt: c.last_sign_in_at,
+                lastSignInIp: c.last_sign_in_ip
             })) as Client[];
         },
     });

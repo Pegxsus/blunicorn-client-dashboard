@@ -514,71 +514,99 @@ const BillingSection = () => {
             </AlertDialog>
 
             <Dialog open={!!selectedInvoice} onOpenChange={(open) => !open && setSelectedInvoice(null)}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Info className="w-5 h-5 text-indigo-500" />
-                            Payment Details
-                        </DialogTitle>
+                <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border/50 bg-card/95 backdrop-blur-xl">
+                    <DialogHeader className="sr-only">
+                        <DialogTitle>Payment Details</DialogTitle>
                     </DialogHeader>
                     {selectedInvoice && (
-                        <div className="space-y-6 py-4">
-                            <div className="text-center p-6 bg-green-500/5 rounded-xl border border-green-500/10">
-                                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg shadow-green-500/20">
-                                    <CheckCircle2 className="w-7 h-7 text-white" />
+                        <div className="flex flex-col h-full">
+                            {/* Header Section */}
+                            <div className="relative bg-gradient-to-br from-emerald-500/20 via-primary/10 to-transparent pt-10 pb-8 px-6 text-center border-b border-border/50">
+
+                                <div className="relative inline-flex mb-4">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30 animate-in zoom-in duration-300">
+                                        <CheckCircle2 className="w-8 h-8 text-white stroke-[2.5]" />
+                                    </div>
+                                    <div className="absolute -inset-1 rounded-full border border-emerald-500/30 animate-pulse" />
                                 </div>
-                                <h4 className="text-xl font-bold text-foreground">Payment Successful</h4>
-                                <p className="text-sm text-muted-foreground mt-1">{selectedInvoice.title}</p>
+
+                                <h4 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-emerald-600">
+                                    Payment Successful
+                                </h4>
+                                <p className="text-sm text-muted-foreground mt-1 max-w-[80%] mx-auto font-medium">
+                                    {selectedInvoice.title}
+                                </p>
                             </div>
 
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center py-2 border-b border-white/5">
-                                    <span className="text-sm text-muted-foreground flex items-center gap-2">
-                                        <CreditCard className="w-4 h-4" /> Amount Paid
-                                    </span>
-                                    <span className="font-semibold text-lg">
-                                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: selectedInvoice.currency || 'USD' }).format(selectedInvoice.amount)}
-                                    </span>
+                            {/* Amount Section */}
+                            <div className="py-6 px-6 text-center bg-card/50">
+                                <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Amount Paid</span>
+                                <div className="mt-2 text-4xl font-bold tracking-tight text-foreground tabular-nums">
+                                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: selectedInvoice.currency || 'USD' }).format(selectedInvoice.amount)}
+                                </div>
+                            </div>
+
+                            {/* Details Grid */}
+                            <div className="px-6 pb-6 space-y-4">
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div className="p-3 rounded-lg bg-muted/30 border border-border/50 space-y-1">
+                                        <span className="flex items-center gap-2 text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                                            <Calendar className="w-3 h-3" /> Paid On
+                                        </span>
+                                        <div className="font-semibold text-foreground">
+                                            {selectedInvoice.paid_at ? format(new Date(selectedInvoice.paid_at), 'MMM d, yyyy') : '-'}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                            {selectedInvoice.paid_at ? format(new Date(selectedInvoice.paid_at), 'h:mm a') : ''}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-3 rounded-lg bg-muted/30 border border-border/50 space-y-1">
+                                        <span className="flex items-center gap-2 text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                                            <CreditCard className="w-3 h-3" /> Method
+                                        </span>
+                                        <div className="font-semibold text-foreground">Razorpay</div>
+                                        <div className="text-xs text-muted-foreground">Secured Payment</div>
+                                    </div>
                                 </div>
 
-                                <div className="flex justify-between items-center py-2 border-b border-white/5">
-                                    <span className="text-sm text-muted-foreground flex items-center gap-2">
-                                        <Calendar className="w-4 h-4" /> Paid On
-                                    </span>
-                                    <span className="text-sm font-medium">
-                                        {selectedInvoice.paid_at && format(new Date(selectedInvoice.paid_at), 'MMM d, yyyy HH:mm')}
-                                    </span>
+                                {/* Transaction IDs */}
+                                <div className="space-y-3 pt-2">
+                                    {selectedInvoice.razorpay_payment_id && (
+                                        <div className="flex flex-col gap-1.5 p-3 rounded-lg bg-muted/30 border border-border/50">
+                                            <span className="flex items-center gap-2 text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                                                <Hash className="w-3 h-3" /> Payment ID
+                                            </span>
+                                            <code className="text-[11px] font-mono select-all text-foreground/80 break-all">
+                                                {selectedInvoice.razorpay_payment_id}
+                                            </code>
+                                        </div>
+                                    )}
+
+                                    {selectedInvoice.razorpay_order_id && (
+                                        <div className="flex flex-col gap-1.5 p-3 rounded-lg bg-muted/30 border border-border/50">
+                                            <span className="flex items-center gap-2 text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                                                <Receipt className="w-3 h-3" /> Order ID
+                                            </span>
+                                            <code className="text-[11px] font-mono select-all text-foreground/80 break-all">
+                                                {selectedInvoice.razorpay_order_id}
+                                            </code>
+                                        </div>
+                                    )}
                                 </div>
+                            </div>
 
-                                {selectedInvoice.razorpay_payment_id && (
-                                    <div className="space-y-1 py-2 border-b border-white/5">
-                                        <span className="text-xs text-muted-foreground flex items-center gap-2 mb-1">
-                                            <Hash className="w-3 h-3" /> Razorpay Payment ID
-                                        </span>
-                                        <code className="text-[10px] bg-muted px-2 py-1 rounded block truncate font-mono">
-                                            {selectedInvoice.razorpay_payment_id}
-                                        </code>
-                                    </div>
-                                )}
-
-                                {selectedInvoice.razorpay_order_id && (
-                                    <div className="space-y-1 py-2">
-                                        <span className="text-xs text-muted-foreground flex items-center gap-2 mb-1">
-                                            <Hash className="w-3 h-3" /> Razorpay Order ID
-                                        </span>
-                                        <code className="text-[10px] bg-muted px-2 py-1 rounded block truncate font-mono">
-                                            {selectedInvoice.razorpay_order_id}
-                                        </code>
-                                    </div>
-                                )}
+                            {/* Footer Actions */}
+                            <div className="px-6 pb-6 pt-2">
+                                <Button
+                                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-lg shadow-emerald-500/20 transition-all duration-300 transform hover:scale-[1.02]"
+                                    onClick={() => setSelectedInvoice(null)}
+                                >
+                                    Done
+                                </Button>
                             </div>
                         </div>
                     )}
-                    <DialogFooter>
-                        <Button className="w-full" onClick={() => setSelectedInvoice(null)}>
-                            Close
-                        </Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

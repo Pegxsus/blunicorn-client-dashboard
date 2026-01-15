@@ -192,9 +192,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-14 items-center justify-between px-4 border-b border-sidebar-border">
-            <Link to="/dashboard" className="flex items-center gap-2.5">
-              <img src={logo} alt="Blukaze" className="w-8 h-8 object-contain rounded-lg" />
-              <span className="text-sm font-semibold text-foreground">Blukaze</span>
+            <Link to="/dashboard" className="flex items-center gap-3">
+              <img src={logo} alt="Blukaze" className="w-10 h-10 object-contain rounded-lg" />
+              <span className="text-base font-bold text-foreground">Blukaze</span>
             </Link>
             <Button
               variant="ghost"
