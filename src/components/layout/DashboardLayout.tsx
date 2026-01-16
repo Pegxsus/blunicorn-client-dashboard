@@ -16,6 +16,7 @@ import {
   Database,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
+import logoLight from '@/assets/logo-light.png';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -193,7 +194,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           {/* Logo */}
           <div className="flex h-14 items-center justify-between px-4 border-b border-sidebar-border">
             <Link to="/dashboard" className="flex items-center gap-3">
-              <img src={logo} alt="Blukaze" className="w-10 h-10 object-contain rounded-lg" />
+              <img src={logo} alt="Blukaze" className="hidden dark:block w-10 h-10 object-contain rounded-lg" />
+              <img src={logoLight} alt="Blukaze" className="block dark:hidden w-10 h-10 object-contain rounded-lg" />
               <span className="text-base font-bold text-foreground">Blukaze</span>
             </Link>
             <Button
