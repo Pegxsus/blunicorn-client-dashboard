@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Mail, Lock, Eye, EyeOff, ArrowLeft, User } from 'lucide-react';
 import logo from '@/assets/logo.png';
+import logoLight from '@/assets/logo-light.png';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Please enter a valid email address');
@@ -109,7 +110,12 @@ const Login = () => {
                 <img
                   src={logo}
                   alt="Blukaze"
-                  className="w-20 h-20 object-contain rounded-xl shadow-lg shadow-primary/10 transition-transform duration-300 hover:scale-105"
+                  className="hidden dark:block w-20 h-20 object-contain rounded-xl shadow-lg shadow-primary/10 transition-transform duration-300 hover:scale-105"
+                />
+                <img
+                  src={logoLight}
+                  alt="Blukaze"
+                  className="block dark:hidden w-20 h-20 object-contain rounded-xl shadow-lg shadow-primary/10 transition-transform duration-300 hover:scale-105"
                 />
                 <span className="text-3xl font-bold text-foreground tracking-tight">Blukaze</span>
               </div>
