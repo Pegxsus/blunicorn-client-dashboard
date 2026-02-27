@@ -49,7 +49,7 @@ const Usage = () => {
                 // (Optional: remove this block if we are strict, but good for stability)
                 try {
                     const { count: c } = await supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'client');
-                    const { count: p } = await supabase.from('projects').select('*', { count: 'exact', head: true });
+                    const { count: p } = await (supabase as any).from('projects').select('*', { count: 'exact', head: true });
                     setMetrics({ clients: c || 0, projects: p || 0, storageUsed: 0 });
                 } catch (err) { /* ignore */ }
             } finally {
