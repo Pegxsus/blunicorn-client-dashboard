@@ -85,7 +85,8 @@ serve(async (req) => {
             .single();
 
         const isAdmin = profile?.role === 'admin';
-        const isClient = invoice.projects.client_id === user.id;
+        const projects = invoice.projects as unknown as { client_id: string };
+        const isClient = projects.client_id === user.id;
 
         if (!isAdmin && !isClient) {
             return new Response(
@@ -176,7 +177,7 @@ serve(async (req) => {
     } catch (error) {
         console.error('Error in create-razorpay-order:', error);
         return new Response(
-            JSON.stringify({ error: error.message || 'Internal server error' }),
+            JSON.stringify({ error: (error as Error).message || 'Internal server error' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
     }
