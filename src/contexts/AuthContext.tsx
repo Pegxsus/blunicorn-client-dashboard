@@ -101,57 +101,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchProfile, fetchRole]);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      return { success: false, error: error.message };
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to reach the authentication service. Please try again.';
+      return { success: false, error: message };
     }
-
-    return { success: true };
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, displayName?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    try {
+      const redirectUrl = `${window.location.origin}/`;
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          display_name: displayName || email.split('@')[0],
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            display_name: displayName || email.split('@')[0],
+          },
         },
-      },
-    });
+      });
 
-    if (error) {
-      if (error.message.includes('already registered')) {
-        return { success: false, error: 'This email is already registered. Please sign in instead.' };
+      if (error) {
+        if (error.message.includes('already registered')) {
+          return { success: false, error: 'This email is already registered. Please sign in instead.' };
+        }
+        return { success: false, error: error.message };
       }
-      return { success: false, error: error.message };
-    }
 
-    return { success: true };
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to reach the authentication service. Please try again.';
+      return { success: false, error: message };
+    }
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
-    const redirectUrl = `${window.location.origin}/dashboard`;
+    try {
+      const redirectUrl = `${window.location.origin}/dashboard`;
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: redirectUrl,
-      },
-    });
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+        },
+      });
 
-    if (error) {
-      return { success: false, error: error.message };
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to reach the authentication service. Please try again.';
+      return { success: false, error: message };
     }
-
-    return { success: true };
   }, []);
 
   const signOut = useCallback(async () => {

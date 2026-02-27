@@ -6,14 +6,16 @@ export const useProjects = () => {
     return useQuery({
         queryKey: ['projects'],
         queryFn: async () => {
-            const { data, error } = await supabase
+            const { data, error } = await (supabase as any)
                 .from('projects')
                 .select('*, profiles:client_id(display_name)')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
 
-            return data.map(p => ({
+            const rows = (data ?? []) as any[];
+
+            return rows.map((p: any) => ({
                 id: p.id,
                 name: p.title,
                 description: p.description || '',

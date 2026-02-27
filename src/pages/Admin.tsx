@@ -144,7 +144,7 @@ const Admin = () => {
 
     setIsCreating(true);
     try {
-      const { error } = await supabase.from('projects').insert({
+      const { error } = await (supabase as any).from('projects').insert({
         title: newProjectName,
         client_id: newProjectClient,
         description: newProjectDescription,
@@ -334,7 +334,7 @@ const Admin = () => {
           break;
       }
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('projects')
         .update({
           status: newStatus,
@@ -360,7 +360,7 @@ const Admin = () => {
     if (!projectToDelete) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('projects')
         .delete()
         .eq('id', projectToDelete.id);

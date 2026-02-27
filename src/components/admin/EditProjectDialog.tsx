@@ -133,7 +133,7 @@ export function EditProjectDialog({ project, open, onOpenChange, onSuccess }: Ed
             console.log('Saving milestones:', milestones);
             console.log('Saving deliverables:', deliverables);
 
-            const { error, data } = await supabase
+            const { error, data } = await (supabase as any)
                 .from('projects')
                 .update({
                     milestones: milestones as any,

@@ -30,7 +30,7 @@ const UsageMetrics = () => {
                     .eq('role', 'client');
 
                 // Count Projects
-                const { count: projectCount, error: projectError } = await supabase
+                const { count: projectCount, error: projectError } = await (supabase as any)
                     .from('projects')
                     .select('*', { count: 'exact', head: true });
 
