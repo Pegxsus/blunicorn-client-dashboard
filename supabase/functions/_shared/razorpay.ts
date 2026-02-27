@@ -69,34 +69,30 @@ export async function createRazorpayOrder(
  * Verify Razorpay webhook signature
  * This is CRITICAL for security - prevents fake payment confirmations
  */
-export function verifyWebhookSignature(
+export async function verifyWebhookSignature(
     payload: string,
     signature: string,
     secret: string
-): boolean {
+): Promise<boolean> {
     try {
-        // Create HMAC SHA256 hash of the payload
         const encoder = new TextEncoder();
         const key = encoder.encode(secret);
         const data = encoder.encode(payload);
 
-        // Use Web Crypto API for HMAC
-        return crypto.subtle.importKey(
+        const cryptoKey = await crypto.subtle.importKey(
             'raw',
             key,
             { name: 'HMAC', hash: 'SHA-256' },
             false,
             ['sign']
-        ).then(cryptoKey =>
-            crypto.subtle.sign('HMAC', cryptoKey, data)
-        ).then(hashBuffer => {
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const generatedSignature = hashArray
-                .map(b => b.toString(16).padStart(2, '0'))
-                .join('');
+        );
+        const hashBuffer = await crypto.subtle.sign('HMAC', cryptoKey, data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const generatedSignature = hashArray
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
 
-            return generatedSignature === signature;
-        }).catch(() => false);
+        return generatedSignature === signature;
     } catch (error) {
         console.error('Signature verification error:', error);
         return false;
