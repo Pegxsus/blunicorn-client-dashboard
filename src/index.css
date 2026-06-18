@@ -479,6 +479,7 @@
   border-radius: 0.75rem !important;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(59, 130, 246, 0.1) !important;
   max-width: 360px !important;
+  width: calc(100vw - 32px) !important;
   padding: 1.25rem !important;
   font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
 }

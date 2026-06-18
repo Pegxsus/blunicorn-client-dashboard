@@ -129,7 +129,7 @@ export default function HelpCenter() {
           </div>
           <Button 
             onClick={handleStartTour}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
+            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2"
           >
             <Play className="w-4 h-4 fill-white" />
             Launch Product Tour
@@ -149,7 +149,7 @@ export default function HelpCenter() {
         </div>
 
         {/* Categories Tab Grid */}
-        <div className="flex flex-wrap gap-2 justify-center border-b border-border pb-4">
+        <div className="flex overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-nowrap md:flex-wrap gap-2 justify-start md:justify-center border-b border-border pb-4 -mx-4 px-4 md:mx-0 md:px-0 whitespace-nowrap">
           {categories.map((cat) => {
             const Icon = cat.icon;
             const isSelected = activeCategory === cat.id;
@@ -218,7 +218,7 @@ export default function HelpCenter() {
           </div>
           <a
             href="mailto:support@blukaze.com"
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-border/60 bg-transparent shadow-sm hover:bg-muted hover:text-foreground h-9 px-4 py-2 text-primary hover:no-underline"
+            className="w-full md:w-auto inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-border/60 bg-transparent shadow-sm hover:bg-muted hover:text-foreground h-9 px-4 py-2 text-primary hover:no-underline"
           >
             support@blukaze.com
           </a>
