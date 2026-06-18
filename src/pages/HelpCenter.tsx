@@ -87,6 +87,13 @@ export default function HelpCenter() {
   });
 
   const handleStartTour = () => {
+    const isMobile = window.innerWidth < 1024;
+    if (isMobile) {
+      toast.error("The product walkthrough is optimized for desktop screens.", {
+        description: "Please switch to a desktop device to take the tour."
+      });
+      return;
+    }
     toast.info("Redirecting to Dashboard to start the tour...");
     navigate('/dashboard');
     setTimeout(() => {

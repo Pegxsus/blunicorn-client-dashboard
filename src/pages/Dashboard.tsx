@@ -106,9 +106,12 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  // Auto-start tour on first login if not completed
+  // Auto-start tour on first login if not completed (desktop only)
   useEffect(() => {
     if (!user) return;
+    const isMobile = window.innerWidth < 1024;
+    if (isMobile) return; // Don't auto-start on mobile/tablet
+
     const localCompleted = localStorage.getItem(`blukaze_onboarding_completed_${user.id}`) === 'true';
     const dbCompleted = user.user_metadata?.hasCompletedOnboarding === true;
     
@@ -123,6 +126,13 @@ const Dashboard = () => {
   // Listen to custom window event
   useEffect(() => {
     const handleStartTour = () => {
+      const isMobile = window.innerWidth < 1024;
+      if (isMobile) {
+        toast.error("The product walkthrough is optimized for desktop screens.", {
+          description: "Please switch to a desktop device to take the tour."
+        });
+        return;
+      }
       startTour();
     };
     window.addEventListener("start-blukaze-tour", handleStartTour);
