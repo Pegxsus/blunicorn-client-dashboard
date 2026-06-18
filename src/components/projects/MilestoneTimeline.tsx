@@ -1,7 +1,7 @@
 import { Milestone } from '@/types';
 import { Check, Circle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { safeFormat } from '@/lib/date';
 
 interface MilestoneTimelineProps {
   milestones: Milestone[];
@@ -70,7 +70,7 @@ const MilestoneTimeline = ({ milestones }: MilestoneTimelineProps) => {
               </div>
               {milestone.completedAt && (
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {format(new Date(milestone.completedAt), 'MMM d')}
+                  {safeFormat(milestone.completedAt, 'MMM d', '')}
                 </span>
               )}
             </div>

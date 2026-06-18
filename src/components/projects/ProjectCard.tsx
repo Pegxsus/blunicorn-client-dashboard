@@ -4,8 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Calendar, ArrowRight } from 'lucide-react';
-import { format } from 'date-fns';
-
+import { safeFormat } from '@/lib/date';
 interface ProjectCardProps {
   project: Project;
   unreadCount?: number;
@@ -53,7 +52,7 @@ const ProjectCard = ({ project, unreadCount = 0 }: ProjectCardProps) => {
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Calendar className="w-3 h-3" />
-            <span>Est. {format(new Date(project.estimatedDelivery), 'MMM d, yyyy')}</span>
+            <span>Est. {safeFormat(project.estimatedDelivery, 'MMM d, yyyy')}</span>
           </div>
           <Button asChild variant="ghost" size="sm" className="gap-1 h-7 text-xs">
             <Link to={`/projects/${project.id}`}>

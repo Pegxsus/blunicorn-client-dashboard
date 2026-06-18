@@ -64,7 +64,7 @@ import {
   Key,
   Info
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { safeFormat } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import { useProjects } from '@/hooks/useProjects';
 import { useClients } from '@/hooks/useClients';
@@ -434,9 +434,9 @@ const Admin = () => {
                                   <h4 className="font-medium leading-none">Client Info</h4>
                                   <p className="text-sm text-muted-foreground">
                                     <span className="font-semibold">Last Online:</span>{' '}
-                                    {client.lastSignInAt
-                                      ? format(new Date(client.lastSignInAt), 'MMM d, yyyy h:mm a')
-                                      : 'Never'}
+                                     {client.lastSignInAt
+                                       ? safeFormat(client.lastSignInAt, 'MMM d, yyyy h:mm a')
+                                       : 'Never'}
                                   </p>
                                   <div className="pt-2 border-t border-border/50 mt-2">
                                     <p className="text-sm text-muted-foreground">
@@ -789,7 +789,7 @@ const Admin = () => {
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {format(new Date(project.updatedAt), 'MMM d, yyyy')}
+                      {safeFormat(project.updatedAt, 'MMM d, yyyy')}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">

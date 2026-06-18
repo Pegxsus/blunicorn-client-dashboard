@@ -36,7 +36,7 @@ import {
 import { Plus, CreditCard, Receipt, Loader2, CheckCircle2, Trash2, Eye, Info, Calendar, Hash, RefreshCw } from 'lucide-react';
 
 
-import { format } from 'date-fns';
+import { safeFormat } from '@/lib/date';
 import { toast } from 'sonner';
 
 interface Invoice {
@@ -422,7 +422,7 @@ const BillingSection = () => {
                                         </div>
                                     </div>
                                     <CardDescription className="text-xs">
-                                        {invoice.created_at && format(new Date(invoice.created_at), 'MMM d, yyyy')}
+                                        {invoice.created_at && safeFormat(invoice.created_at, 'MMM d, yyyy')}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -434,14 +434,14 @@ const BillingSection = () => {
                                         {invoice.due_date && (
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-muted-foreground">Due Date</span>
-                                                <span>{format(new Date(invoice.due_date), 'MMM d, yyyy')}</span>
+                                                <span>{safeFormat(invoice.due_date, 'MMM d, yyyy')}</span>
                                             </div>
                                         )}
 
                                         {invoice.paid_at && (
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-muted-foreground">Paid On</span>
-                                                <span className="text-green-600">{format(new Date(invoice.paid_at), 'MMM d, yyyy')}</span>
+                                                <span className="text-green-600">{safeFormat(invoice.paid_at, 'MMM d, yyyy')}</span>
                                             </div>
                                         )}
 
@@ -554,10 +554,10 @@ const BillingSection = () => {
                                             <Calendar className="w-3 h-3" /> Paid On
                                         </span>
                                         <div className="font-semibold text-foreground">
-                                            {selectedInvoice.paid_at ? format(new Date(selectedInvoice.paid_at), 'MMM d, yyyy') : '-'}
+                                            {selectedInvoice.paid_at ? safeFormat(selectedInvoice.paid_at, 'MMM d, yyyy') : '-'}
                                         </div>
                                         <div className="text-xs text-muted-foreground">
-                                            {selectedInvoice.paid_at ? format(new Date(selectedInvoice.paid_at), 'h:mm a') : ''}
+                                            {selectedInvoice.paid_at ? safeFormat(selectedInvoice.paid_at, 'h:mm a') : ''}
                                         </div>
                                     </div>
 

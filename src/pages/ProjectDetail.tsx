@@ -20,7 +20,7 @@ import {
   Receipt
 } from 'lucide-react';
 import BillingSection from '@/components/projects/BillingSection';
-import { format } from 'date-fns';
+import { safeFormat } from '@/lib/date';
 import { ProjectStatus } from '@/types';
 import { useProjects } from '@/hooks/useProjects';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -185,7 +185,7 @@ const ProjectDetail = () => {
               </div>
               <div>
                 <p className="text-lg font-bold text-foreground">
-                  {format(new Date(project.estimatedDelivery), 'MMM d')}
+                  {safeFormat(project.estimatedDelivery, 'MMM d')}
                 </p>
                 <p className="text-xs text-muted-foreground">Est. Delivery</p>
               </div>
@@ -199,7 +199,7 @@ const ProjectDetail = () => {
               </div>
               <div>
                 <p className="text-lg font-bold text-foreground">
-                  {format(new Date(project.updatedAt), 'MMM d')}
+                  {safeFormat(project.updatedAt, 'MMM d')}
                 </p>
                 <p className="text-xs text-muted-foreground">Last Updated</p>
               </div>
