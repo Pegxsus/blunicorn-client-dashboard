@@ -188,6 +188,9 @@ const FeedbackSection = ({ revisionCount }: FeedbackSectionProps) => {
 
       if (error) throw error;
 
+      // Mark feedback checklist item as completed
+      localStorage.setItem(`blukaze_task_leave_feedback_${user.id}`, 'true');
+
       // Clear input
       setNewMessage('');
 

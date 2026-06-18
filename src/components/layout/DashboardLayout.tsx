@@ -14,6 +14,8 @@ import {
   ChevronDown,
   Shield,
   Database,
+  Play,
+  HelpCircle,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import logoLight from '@/assets/logo-light.png';
@@ -158,6 +160,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       ]
       : []),
     { name: 'Settings', href: '/settings', icon: Settings },
+    { name: 'Help Center', href: '/help', icon: HelpCircle },
   ];
 
   const handleLogout = async () => {
@@ -218,6 +221,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <Link
                   key={item.name}
                   to={item.href}
+                  id={item.name === 'Projects' ? 'tour-projects' : undefined}
                   className={cn(
                     'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors relative',
                     isActive
@@ -357,7 +361,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             {/* User menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2">
+                <Button id="tour-profile" variant="ghost" className="gap-2">
                   <Avatar className="w-7 h-7">
                     <AvatarImage src={profile?.avatar_url || ''} />
                     <AvatarFallback className="bg-primary/10 text-primary text-xs">
@@ -371,9 +375,21 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => {
+                  window.dispatchEvent(new Event("start-blukaze-tour"));
+                }}>
+                  <Play className="w-4 h-4 mr-2 text-primary" />
+                  Take Product Tour
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/settings')}>
                   <Settings className="w-4 h-4 mr-2" />
                   Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/help')}>
+                  <HelpCircle className="w-4 h-4 mr-2" />
+                  Help Center
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>

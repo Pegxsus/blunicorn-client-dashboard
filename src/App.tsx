@@ -12,6 +12,7 @@ import ProjectDetail from "./pages/ProjectDetail";
 import Admin from "./pages/Admin";
 import Settings from "./pages/Settings";
 import Usage from "./pages/Usage";
+import HelpCenter from "./pages/HelpCenter";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -85,6 +86,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Usage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/help"
+        element={
+          <ProtectedRoute>
+            <HelpCenter />
           </ProtectedRoute>
         }
       />

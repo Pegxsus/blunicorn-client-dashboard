@@ -69,6 +69,13 @@ const ProjectDetail = () => {
     }
   }, [location.state, location.pathname, navigate]);
 
+  // Mark "View your first project" checklist item as completed
+  React.useEffect(() => {
+    if (user?.id) {
+      localStorage.setItem(`blukaze_task_view_project_${user.id}`, 'true');
+    }
+  }, [user]);
+
   const handleTabChange = async (value: string) => {
     setActiveTab(value);
     if (value === 'feedback' && projectUnreadCount > 0) {
